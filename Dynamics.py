@@ -1,100 +1,83 @@
-# pip install --upgrade jax jaxlib  # if needed
-
-from dataclasses import dataclass
-from typing import Tuple
 import jax
 import jax.numpy as jnp
 
-@dataclass
-class Params:
-    m1: float = 1.0
-    m2: float = 1.0
-    l1: float = 1.0
-    l2: float = 1.0
-    g:  float = 9.81
+g  = 9.81
+m1 = 1.0
+m2 = 1.0
+l1 = 1.0
+l2 = 1.0
+lc1 = 0.5
+lc2 = 0.5
+I1 = 0.2
+I2 = 0.2
 
-# ---- Dynamics (θ1, θ2, ω1, ω2) ----
+# torque limits
+u_min = jnp.array([-12.0, -12.0])
+u_max = jnp.array([+12.0, +12.0])
+
+def angle_wrap(x):
+    """Wrap angle to (-pi, pi]."""
+    return (x + jnp.pi) % (2.0 * jnp.pi) - jnp.pi
+
+def state_error(x, x_ref):
+    """Angle errors wrapped, rates linear."""
+    th1, th1d, th2, th2d = x
+    r1, r1d, r2, r2d = x_ref
+    return jnp.array([
+        angle_wrap(th1 - r1),
+        th1d - r1d,
+        angle_wrap(th2 - r2),
+        th2d - r2d
+    ], dtype=jnp.float32)
+
+def two_link_ddq(x, u):
+    """Compute joint accelerations (Spong form)."""
+    th1, th1d, th2, th2d = x
+    tau1, tau2 = u
+
+    c2 = jnp.cos(th2)
+    s2 = jnp.sin(th2)
+
+    # Inertia matrix D(q)
+    d11 = I1 + I2 + m1*lc1**2 + m2*(l1**2 + lc2**2 + 2*l1*lc2*c2)
+    d12 = I2 + m2*(lc2**2 + l1*lc2*c2)
+    d21 = d12
+    d22 = I2 + m2*lc2**2
+    D = jnp.array([[d11, d12],
+                   [d21, d22]], dtype=jnp.float32)
+
+    # Coriolis/centrifugal term C(q,qd)qd (Spong’s h trick)
+    h = m2*l1*lc2*s2
+    c1 = -2.0*h*th1d*th2d - h*th2d**2
+    c2_term = h*th1d**2
+    Cqd = jnp.array([c1, c2_term], dtype=jnp.float32)
+
+    # Gravity
+    g1 = (m1*lc1 + m2*l1)*g*jnp.sin(th1) + m2*lc2*g*jnp.sin(th1 + th2)
+    g2 = m2*lc2*g*jnp.sin(th1 + th2)
+    Gv = jnp.array([g1, g2], dtype=jnp.float32)
+
+    tau = jnp.array([tau1, tau2], dtype=jnp.float32)
+    rhs = tau - Cqd - Gv
+    ddq = jnp.linalg.solve(D, rhs)
+    return ddq[0], ddq[1]
+
+def f_continuous(x, u):
+    """State derivative: [th1d, th1dd, th2d, th2dd]."""
+    th1, th1d, th2, th2d = x
+    th1dd, th2dd = two_link_ddq(x, u)
+    return jnp.array([th1d, th1dd, th2d, th2dd], dtype=jnp.float32)
+
+def rk4_step(x, u, h):
+    """RK4 integrator for stability."""
+    k1 = f_continuous(x, u)
+    k2 = f_continuous(x + 0.5*h*k1, u)
+    k3 = f_continuous(x + 0.5*h*k2, u)
+    k4 = f_continuous(x + h*k3, u)
+    return x + (h/6.0)*(k1 + 2*k2 + 2*k3 + k4)
+
 @jax.jit
-def double_pendulum_dynamics(state: jnp.ndarray, p: Params) -> jnp.ndarray:
-    """
-    state = [theta1, theta2, omega1, omega2]
-    returns dstate/dt in the same order.
-    """
-    θ1, θ2, ω1, ω2 = state
-    m1, m2, l1, l2, g = p.m1, p.m2, p.l1, p.l2, p.g
-
-    Δ = θ2 - θ1
-    sinΔ = jnp.sin(Δ)
-    cosΔ = jnp.cos(Δ)
-
-    denom = (2*m1 + m2 - m2 * jnp.cos(2*Δ))
-
-    # θ1'' (omega1dot)
-    num1 = (-g * (2*m1 + m2) * jnp.sin(θ1)
-            - m2 * g * jnp.sin(θ1 - 2*θ2)
-            - 2 * sinΔ * m2 * (ω2**2 * l2 + ω1**2 * l1 * cosΔ))
-    ω1dot = num1 / (l1 * denom)
-
-    # θ2'' (omega2dot)
-    num2 = (2 * sinΔ * (ω1**2 * l1 * (m1 + m2)
-                        + g * (m1 + m2) * jnp.cos(θ1)
-                        + ω2**2 * l2 * m2 * cosΔ))
-    ω2dot = num2 / (l2 * denom)
-
-    return jnp.array([ω1, ω2, ω1dot, ω2dot])
-
-# ---- Fixed-step RK4 integrator (JAX-friendly) ----
-@jax.jit
-def rk4_step(f, state: jnp.ndarray, dt: float, p: Params) -> jnp.ndarray:
-    k1 = f(state, p)
-    k2 = f(state + 0.5*dt*k1, p)
-    k3 = f(state + 0.5*dt*k2, p)
-    k4 = f(state + dt*k3, p)
-    return state + (dt/6.0)*(k1 + 2*k2 + 2*k3 + k4)
-
-@jax.jit
-def simulate(f, y0: jnp.ndarray, p: Params, dt: float, steps: int) -> jnp.ndarray:
-    """
-    Returns trajectory with shape [steps+1, 4].
-    """
-    def body(y, _):
-        y_next = rk4_step(f, y, dt, p)
-        return y_next, y_next
-    yT, ys = jax.lax.scan(body, y0, None, length=steps)
-    return jnp.vstack([y0, ys])
-
-# ---- Energy (useful for sanity checks) ----
-@jax.jit
-def energies(state: jnp.ndarray, p: Params) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-    θ1, θ2, ω1, ω2 = state
-    m1, m2, l1, l2, g = p.m1, p.m2, p.l1, p.l2, p.g
-
-    # Cartesian positions (pivot at origin, down is +y convention can be chosen;
-    # here we use y up positive -> potential = m g y, with y measured upward)
-    x1 =  l1 * jnp.sin(θ1)
-    y1 = -l1 * jnp.cos(θ1)
-    x2 =  x1 + l2 * jnp.sin(θ2)
-    y2 =  y1 - l2 * jnp.cos(θ2)
-
-    # Velocities
-    vx1 =  l1 * ω1 * jnp.cos(θ1)
-    vy1 =  l1 * ω1 * jnp.sin(θ1)
-    vx2 =  vx1 + l2 * ω2 * jnp.cos(θ2)
-    vy2 =  vy1 + l2 * ω2 * jnp.sin(θ2)
-
-    T = 0.5*m1*(vx1**2 + vy1**2) + 0.5*m2*(vx2**2 + vy2**2)
-    V = m1*g*y1 + m2*g*y2
-    E = T + V
-    return T, V, E
-
-# ---- Example usage ----
-if __name__ == "__main__":
-    p = Params(m1=1.0, m2=1.0, l1=1.0, l2=1.0, g=9.81)
-    # initial state: θ1, θ2, ω1, ω2
-    y0 = jnp.array([1.2, -0.5, 0.0, 0.0])
-    dt = 0.005
-    steps = 4000
-
-    traj = simulate(double_pendulum_dynamics, y0, p, dt, steps)
-    # Example: compute energies over the trajectory
-    T, V, E = jax.vmap(lambda s: energies(s, p))(traj)
+def jax_dynamics(x, u, dt=0.01):
+    """JIT-ed dynamics step with torque clipping."""
+    u = jnp.clip(u, u_min, u_max)
+    return rk4_step(x, u, dt)
