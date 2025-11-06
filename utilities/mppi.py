@@ -1,8 +1,6 @@
-# ~/myenv/Nonparameric_Hamiltonian_Systems/utilities/mppi.py
 import jax
 import jax.numpy as jnp
 from functools import partial
-
 class MPPI:
     def __init__(self, dyn_fn, dt=0.01, horizon=60, n_samples=2000,
                  Q=None, QT=None, R=None, x_ref=None,

@@ -1,51 +1,126 @@
-import jax
-import jax.numpy as jnp
+import casadi as cs
+import numpy as np
+import do_mpc
 
-def _linearize_discrete(dyn_fn, x0, u0, dt):
-    f = lambda x, u: dyn_fn(x, u, dt)
-    A = jax.jacfwd(f, argnums=0)(x0, u0)
-    B = jax.jacfwd(f, argnums=1)(x0, u0)
-    return A, B
+g = 9.81
+m1 = 1.0
+m2 = 1.0
+l1 = 1.0
+l2 = 1.0
+lc1 = 0.5
+lc2 = 0.5
+I1 = 0.2
+I2 = 0.2
 
-def _dlqr(A, B, Q, R, max_iters=200, tol=1e-8):
-    P = Q
-    for _ in range(max_iters):
-        BT_P = B.T @ P
-        S = R + BT_P @ B
-        K = jnp.linalg.solve(S, BT_P @ A)
-        Acl = A - B @ K
-        P_next = Acl.T @ P @ Acl + K.T @ R @ K + Q
-        if jnp.max(jnp.abs(P_next - P)) < tol:
-            P = P_next
-            break
-        P = P_next
-    BT_P = B.T @ P
-    S = R + BT_P @ B
-    K = jnp.linalg.solve(S, BT_P @ A)
-    return K, P
+u_min = np.array([-12.0, -12.0])
+u_max = np.array([+12.0, +12.0])
 
-class SimpleLQRMPC:
-    def __init__(self, dyn_fn, dt,
-                 x_ref, Q, R,
-                 u_ref=None,
-                 u_min=None, u_max=None):
-        self.dyn = dyn_fn
-        self.dt = dt
-        self.x_ref = jnp.array(x_ref, dtype=jnp.float32)
-        self.u_ref = jnp.zeros((2,), dtype=jnp.float32) if u_ref is None else jnp.array(u_ref, dtype=jnp.float32)
-        self.Q = Q
-        self.R = R
-        self.u_min = u_min
-        self.u_max = u_max
+x_ref = np.array([0.0, 0.0, 0.0, 0.0])  # desired state: upright position
 
-        A, B = _linearize_discrete(self.dyn, self.x_ref, self.u_ref, self.dt)
-        self.K, self.P = _dlqr(A, B, self.Q, self.R)
+Q = np.diag([60.0, 2.0, 60.0, 2.0])
+QT = np.diag([140.0, 5.0, 140.0, 5.0])
+R = np.diag([1e-2, 1e-2])
 
-    def step(self, x):
-        x = jnp.array(x, dtype=jnp.float32)
-        u = self.u_ref - self.K @ (x - self.x_ref)
-        if self.u_min is not None or self.u_max is not None:
-            u_min = self.u_min if self.u_min is not None else -jnp.inf*jnp.ones_like(u)
-            u_max = self.u_max if self.u_max is not None else +jnp.inf*jnp.ones_like(u)
-            u = jnp.clip(u, u_min, u_max)
-        return u
+def angle_wrap(x):
+    return cs.atan2(cs.sin(x), cs.cos(x))
+
+model = do_mpc.model.Model('continuous')
+
+th1 = model.set_variable('_x', 'th1')
+th1d = model.set_variable('_x', 'th1d')
+th2 = model.set_variable('_x', 'th2')
+th2d = model.set_variable('_x', 'th2d')
+
+tau1 = model.set_variable('_u', 'tau1')
+tau2 = model.set_variable('_u', 'tau2')
+
+c2 = cs.cos(th2)
+s2 = cs.sin(th2)
+
+d11 = I1 + I2 + m1*lc1**2 + m2*(l1**2 + lc2**2 + 2*l1*lc2*c2)
+d12 = I2 + m2*(lc2**2 + l1*lc2*c2)
+d21 = d12
+d22 = I2 + m2*lc2**2
+D = cs.vertcat(
+    cs.hcat([d11, d12]),
+    cs.hcat([d21, d22])
+)
+
+h = m2*l1*lc2*s2
+c1 = -2.0*h*th1d*th2d - h*th2d**2
+c2_term = h*th1d**2
+Cqd = cs.vertcat(c1, c2_term)
+
+g1 = (m1*lc1 + m2*l1)*g*cs.sin(th1) + m2*lc2*g*cs.sin(th1 + th2)
+g2 = m2*lc2*g*cs.sin(th1 + th2)
+Gv = cs.vertcat(g1, g2)
+
+tau = cs.vertcat(tau1, tau2)
+rhs = tau - Cqd - Gv
+ddq = cs.solve(D, rhs)
+
+# ODEs
+model.set_rhs('th1', th1d)
+model.set_rhs('th1d', ddq[0])
+model.set_rhs('th2', th2d)
+model.set_rhs('th2d', ddq[1])
+
+model.setup()
+
+mpc = do_mpc.controller.MPC(model)
+
+dt = 0.02
+setup_mpc = {
+    'n_horizon': 120,
+    't_step': dt,
+    'state_discretization': 'collocation',
+    'collocation_type': 'radau',
+    'n_robust': 0,
+    'store_full_solution': True,
+}
+
+mpc.set_param(**setup_mpc)
+
+eth1 = angle_wrap(th1 - x_ref[0])
+eth1d = (th1d - x_ref[1])
+eth2 = angle_wrap(th2 - x_ref[2])
+eth2d = (th2d - x_ref[3])
+
+e_vec = cs.vertcat(eth1, eth1d, eth2, eth2d)
+u_vec = cs.vertcat(tau1, tau2)
+
+lterm = cs.mtimes([e_vec.T, QT, e_vec]) + cs.mtimes([u_vec.T, R, u_vec])
+mterm = cs.mtimes([e_vec.T, Q, e_vec])
+
+mpc.set_objective(mterm=mterm, lterm=lterm)
+mpc.set_rterm(tau1=1e-4, tau2=1e-4)
+
+mpc.bounds['lower','_u','tau1'] = u_min[0]
+mpc.bounds['upper','_u','tau1'] = u_max[0]
+mpc.bounds['lower','_u','tau2'] = u_min[1]
+mpc.bounds['upper','_u','tau2'] = u_max[1]
+
+mpc.setup()
+
+simulator = do_mpc.simulator.Simulator(model)
+simulator.set_param(t_step = dt)
+simulator.setup()
+
+x0 = np.array([np.pi, 0.0, np.pi, 0.0])
+mpc.x0 = x0
+simulator.x0 = x0
+mpc.set_initial_guess()
+
+X = np.zeros((N+1, 4))
+U = np.zeros((N, 2))
+T = np.zeros(N+1)
+X[0,:] = x0
+
+x = x0.copy()
+for k in range(N):
+    u = mpc.make_step(x)
+    x = simulator.make_step(u)
+
+    X[k+1,:] = x.squeeze()
+    U[k,:]   = u.squeeze()
+    T[k+1]   = T[k] + dt

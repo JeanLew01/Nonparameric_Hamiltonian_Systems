@@ -38,7 +38,6 @@ def two_link_ddq(x, u):
     c2 = jnp.cos(th2)
     s2 = jnp.sin(th2)
 
-    # Inertia matrix D(q)
     d11 = I1 + I2 + m1*lc1**2 + m2*(l1**2 + lc2**2 + 2*l1*lc2*c2)
     d12 = I2 + m2*(lc2**2 + l1*lc2*c2)
     d21 = d12
@@ -46,7 +45,6 @@ def two_link_ddq(x, u):
     D = jnp.array([[d11, d12],
                    [d21, d22]], dtype=jnp.float32)
 
-    # Coriolis/centrifugal term C(q,qd)qd (Spong’s h trick)
     h = m2*l1*lc2*s2
     c1 = -2.0*h*th1d*th2d - h*th2d**2
     c2_term = h*th1d**2
