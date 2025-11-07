@@ -11,7 +11,6 @@ lc2 = 0.5
 I1 = 0.2
 I2 = 0.2
 
-# torque limits
 u_min = jnp.array([-12.0, -12.0])
 u_max = jnp.array([+12.0, +12.0])
 

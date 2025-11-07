@@ -160,5 +160,4 @@ def rollout_mpc(mpc, simulator, x0, sim_time=10.0, save_U=True, save_prefix=""):
         base = (save_prefix + "_" if save_prefix else "")
         np.save(base + "U.npy", U)
         np.savetxt(base + "U.csv", U, delimiter=",")
-
     return T, X, U
