@@ -30,7 +30,6 @@ def state_error(x, x_ref):
     ], dtype=jnp.float32)
 
 def two_link_ddq(x, u):
-    """Compute joint accelerations (Spong form)."""
     th1, th1d, th2, th2d = x
     tau1, tau2 = u
 
@@ -49,9 +48,8 @@ def two_link_ddq(x, u):
     c2_term = h*th1d**2
     Cqd = jnp.array([c1, c2_term], dtype=jnp.float32)
 
-    # Gravity
-    g1 = (m1*lc1 + m2*l1)*g*jnp.sin(th1) + m2*lc2*g*jnp.sin(th1 + th2)
-    g2 = m2*lc2*g*jnp.sin(th1 + th2)
+    g1 = -((m1*lc1 + m2*l1)*g*jnp.sin(th1) + m2*lc2*g*jnp.sin(th1 + th2))
+    g2 = -(m2*lc2*g*jnp.sin(th1 + th2))
     Gv = jnp.array([g1, g2], dtype=jnp.float32)
 
     tau = jnp.array([tau1, tau2], dtype=jnp.float32)

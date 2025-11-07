@@ -75,8 +75,8 @@ def build_double_pendulum_mpc(cfg: DoublePendulumParams):
     c2_term = h*th1d**2
     Cqd = cs.vertcat(c1, c2_term)
 
-    g1 = (cfg.m1*cfg.lc1 + cfg.m2*cfg.l1)*cfg.g*cs.sin(th1) + cfg.m2*cfg.lc2*cfg.g*cs.sin(th1 + th2)
-    g2 = cfg.m2*cfg.lc2*cfg.g*cs.sin(th1 + th2)
+    g1 = -(cfg.m1*cfg.lc1 + cfg.m2*cfg.l1)*cfg.g*cs.sin(th1) + cfg.m2*cfg.lc2*cfg.g*cs.sin(th1 + th2)
+    g2 = -cfg.m2*cfg.lc2*cfg.g*cs.sin(th1 + th2)
     Gv = cs.vertcat(g1, g2)
 
     tau = cs.vertcat(tau1, tau2)
