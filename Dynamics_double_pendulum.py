@@ -110,7 +110,7 @@ class DoublePendulumEnv(gym.Env):
         x_ref=np.array([0.0, 0.0, 0.0, 0.0]),
         u_min=np.array([-12.0, -12.0]),
         u_max=np.array([+12.0, +12.0]),
-        success_tol=np.array([5.0 * np.pi / 180, 0.3, 5.0 * np.pi / 180, 0.3]),
+        success_tol=np.array([0.1, 0.01, 0.1, 0.01]),
         default_x0=np.array([np.pi, 0.0, 0.0, 0.0]),
         reset_noise_std=np.array([0.02, 0.02, 0.02, 0.02]),
         seed: int | None = None,
@@ -120,7 +120,7 @@ class DoublePendulumEnv(gym.Env):
         self.dt = float(dt)
         self.T = float(episode_seconds)
         self.horizon_steps = int(np.round(self.T / self.dt))
-
+    
         # cost matrices (store as float32 for RL friendliness)
         self.Q = np.array(Q, dtype=np.float32)
         self.R = np.array(R, dtype=np.float32)
@@ -140,7 +140,6 @@ class DoublePendulumEnv(gym.Env):
         self.nx = 4
         self.nu = 2
 
-        # Observation and action spaces (float32)
         high_x = np.array([np.pi, np.inf, np.pi, np.inf], dtype=np.float32)
         self.observation_space = spaces.Box(
             low=-high_x, high=high_x, dtype=np.float32
@@ -149,7 +148,6 @@ class DoublePendulumEnv(gym.Env):
             low=self.u_min, high=self.u_max, shape=(2,), dtype=np.float32
         )
 
-        # CasADi dynamics and integrator
         self._build_casadi_dynamics()
         self._build_casadi_integrator()
 
@@ -162,7 +160,6 @@ class DoublePendulumEnv(gym.Env):
         self.seed(seed)
 
     def _build_casadi_dynamics(self):
-        # local copies of parameters
         g_local = 9.81
         m1_local = 1.0
         m2_local = 1.0
@@ -173,7 +170,6 @@ class DoublePendulumEnv(gym.Env):
         I1_local = 0.2
         I2_local = 0.2
 
-        # state and input
         th1  = cs.SX.sym("th1")
         th1d = cs.SX.sym("th1d")
         th2  = cs.SX.sym("th2")
