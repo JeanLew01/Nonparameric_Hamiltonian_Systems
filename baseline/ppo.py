@@ -10,7 +10,7 @@ from torch.distributions import MultivariateNormal
 
 class PPO:
 
-    def __init__(self, policy_class, env, **hyperparameters):
+    def __init__(self, policy_class, env, expert_states=None, expert_actions=None, **hyperparameters):
         assert isinstance(env.observation_space, gym.spaces.Box)
         assert isinstance(env.action_space, gym.spaces.Box)
 
@@ -25,7 +25,7 @@ class PPO:
         self.actor_optim = Adam(self.actor.parameters(), lr=self.lr)
         self.critic_optim = Adam(self.critic.parameters(), lr=self.lr)
 
-        self.cov_var = torch.full(size=(self.act_dim,), fill_value=0.5)
+        self.cov_var = torch.full(size=(self.act_dim,), fill_value=0.1)
         self.cov_mat = torch.diag(self.cov_var)
 
         self.logger = {
@@ -36,6 +36,13 @@ class PPO:
             "batch_rews": [],
             "actor_losses": [],
         }
+
+        if expert_states is not None and expert_actions is not None:
+            self.expert_states  = torch.tensor(expert_states, dtype=torch.float32)
+            self.expert_actions = torch.tensor(expert_actions, dtype=torch.float32)
+        else:
+            self.expert_states  = None
+            self.expert_actions = None
 
     def learn(self, total_timesteps: int):
         print(
@@ -50,13 +57,7 @@ class PPO:
         i_so_far = 0
 
         while t_so_far < total_timesteps:  
-            (
-                batch_obs,
-                batch_acts,
-                batch_log_probs,
-                batch_rtgs,
-                batch_lens,
-            ) = self.rollout()  # ALG STEP 3
+            ( batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lens,) = self.rollout()  # ALG STEP 3
 
             t_so_far += np.sum(batch_lens)
             i_so_far += 1
@@ -69,18 +70,32 @@ class PPO:
 
             A_k = (A_k - A_k.mean()) / (A_k.std() + 1e-10)
 
-            for _ in range(self.n_updates_per_iteration):  # ALG STEP 6 & 7
+            for _ in range(self.n_updates_per_iteration):
                 V, curr_log_probs = self.evaluate(batch_obs, batch_acts)
-
-                # ratio = pi_theta(a|s) / pi_theta_old(a|s)
                 ratios = torch.exp(curr_log_probs - batch_log_probs)
 
-                # clipped surrogate objective
                 surr1 = ratios * A_k
                 surr2 = torch.clamp(ratios, 1 - self.clip, 1 + self.clip) * A_k
 
-                actor_loss = (-torch.min(surr1, surr2)).mean()
-                critic_loss = nn.MSELoss()(V, batch_rtgs)
+                ppo_actor_loss = (-torch.min(surr1, surr2)).mean()
+                critic_loss    = nn.MSELoss()(V, batch_rtgs)
+
+                if (self.expert_states is not None) and (self.expert_actions is not None):
+                    idx = torch.randint(
+                        low=0,
+                        high=self.expert_states.shape[0],
+                        size=(256,)
+                    )
+                    expert_s = self.expert_states[idx]
+                    expert_a = self.expert_actions[idx]
+
+                    pred_a = self.actor(expert_s)
+
+                    bc_loss = nn.MSELoss()(pred_a, expert_a)
+
+                    actor_loss = ppo_actor_loss + self.bc_reg_coef * bc_loss
+                else:
+                    actor_loss = ppo_actor_loss
 
                 self.actor_optim.zero_grad()
                 actor_loss.backward(retain_graph=True)
@@ -89,14 +104,6 @@ class PPO:
                 self.critic_optim.zero_grad()
                 critic_loss.backward()
                 self.critic_optim.step()
-
-                self.logger["actor_losses"].append(actor_loss.detach())
-
-            self._log_summary()
-
-            if i_so_far % self.save_freq == 0:
-                torch.save(self.actor.state_dict(), "./ppo_actor.pth")
-                torch.save(self.critic.state_dict(), "./ppo_critic.pth")
 
     def rollout(self):
 
@@ -200,6 +207,8 @@ class PPO:
         self.render_every_i = 10
         self.save_freq = 10
         self.seed = None
+        self.bc_reg_coef = 1.0 
+        self.render = False
 
         for param, val in hyperparameters.items():
             setattr(self, param, val)
