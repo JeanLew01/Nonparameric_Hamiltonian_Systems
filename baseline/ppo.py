@@ -197,9 +197,9 @@ class PPO:
     def _init_hyperparameters(self, hyperparameters):
 
         self.timesteps_per_batch = 4096
-        self.max_timesteps_per_episode = 800
+        self.max_timesteps_per_episode = 1600
         self.n_updates_per_iteration = 5
-        self.lr = 3e-4
+        self.lr = 1e-4
         self.gamma = 0.99
         self.clip = 0.2
 
@@ -207,7 +207,7 @@ class PPO:
         self.render_every_i = 10
         self.save_freq = 10
         self.seed = None
-        self.bc_reg_coef = 1.0 
+        self.bc_reg_coef = 0.1 
         self.render = False
 
         for param, val in hyperparameters.items():
