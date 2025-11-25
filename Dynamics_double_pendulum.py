@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 import gymnasium as gym
-import gymnasium.spaces as spaces
+from gymnasium import spaces
 
 import numpy as np
 import casadi as cs
@@ -86,9 +86,8 @@ def jax_dynamics(x, u, dt=0.01):
     u = jnp.clip(u, u_min, u_max)
     return rk4_step(x, u, dt)
 
-def wrap_angle_np(a: float) -> float:
-    """Wrap angle to (-pi, pi] using NumPy."""
-    return float(np.arctan2(np.sin(a), np.cos(a)))
+def wrap_angle_np(theta: float) -> float:
+    return ((theta + np.pi) % (2 * np.pi)) - np.pi
 
 class DoublePendulumEnv(gym.Env):
     """
@@ -114,6 +113,10 @@ class DoublePendulumEnv(gym.Env):
         default_x0=np.array([np.pi, 0.0, 0.0, 0.0]),
         reset_noise_std=np.array([0.02, 0.02, 0.02, 0.02]),
         seed: int | None = None,
+        # ===== 新增：用于 reward shaping 的 “成功半径” 和 bonus =====
+        success_eps: float = 0.2,
+        terminal_bonus: float = 50.0,
+        # ==========================================================
     ):
         super().__init__()
 
@@ -155,9 +158,14 @@ class DoublePendulumEnv(gym.Env):
         self._x: np.ndarray | None = None
         self._k: int = 0
 
-        # Gymnasium RNG (np_random)
+        # Gymnasium RNG
         self._np_random = None
         self.seed(seed)
+
+        # ===== 新增：保存 success 半径和 bonus =====
+        self.success_eps = float(success_eps)
+        self.terminal_bonus = float(terminal_bonus)
+        # ==========================================
 
     def _build_casadi_dynamics(self):
         g_local = 9.81
@@ -234,7 +242,6 @@ class DoublePendulumEnv(gym.Env):
     # ------------------------------------------------------------------
     def seed(self, seed: int | None = None):
         """Set the environment seed."""
-        # Gymnasium uses np_random; keep a simple wrapper here.
         self._np_random = np.random.default_rng(seed)
         return [seed]
 
@@ -326,6 +333,12 @@ class DoublePendulumEnv(gym.Env):
 
         # Truncation condition: horizon reached
         truncated = self._k >= self.horizon_steps
+
+        # ==== 新增：成功终止或截断且进入 success_eps 球 -> 给 bonus ====
+        if terminated or truncated:
+            if np.linalg.norm(e, ord=2) < self.success_eps:
+                reward += self.terminal_bonus
+        # ===========================================================
 
         obs = self._x.astype(np.float32)
         info = {
