@@ -706,7 +706,6 @@ if PRODUCE_FIGURES:
             x_cur = get_state_array(sim.x0)
             dist_to_target = state_distance(x_cur, x_star)
 
-            # LQR region
             if dist_to_target < DIST_THRESHOLD_LQR:
                 x_err = x_cur - x_star
                 u_lqr = -K_lqr @ x_err
@@ -721,7 +720,6 @@ if PRODUCE_FIGURES:
                 mode_hist.append(2)
                 step += 1
                 continue
-
             # policy selection
             candidates = [(idx, xi, RADIUS_AMPLIFY * ri, ti, ui) for idx, (xi, ri, ti, ui) in enumerate(results_alpha)
                           if (ri is not None) and (ri > 0) and (ui is not None) and (ti is not None)]
