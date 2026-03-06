@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from Dynamics_double_pendulum import DoublePendulumEnv
+from dynamics.Dynamics_double_pendulum import DoublePendulumEnv
 
 DEFAULT_DOUBLE_PENDULUM_ROLLOUT_NAMES = (
     "x0_pi_0_0_0",
