@@ -1,6 +1,10 @@
 import numpy as np
 
+__all__ = ["rollout_bc_policy"]
+
+
 def rollout_bc_policy(env, bc_trainer, max_steps=None, x0=None):
+    """Roll out a behavior-cloned policy in any Gymnasium-style environment."""
     if x0 is not None:
         obs, _ = env.reset(options={"x0": np.array(x0, dtype=np.float32)})
     else:

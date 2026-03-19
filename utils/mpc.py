@@ -1,294 +1,281 @@
-import numpy as np
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
 import casadi as cs
 import do_mpc
+import numpy as np
 
 __all__ = [
     "DoublePendulumParams",
     "build_double_pendulum_mpc",
+    "SinglePendulumParams",
+    "build_single_pendulum_mpc",
+    "SpringMassParams",
+    "build_spring_mass_mpc",
     "rollout_mpc",
-    "CartPoleParams",
-    "build_cart_pole_mpc",
-    "rollout_cart_pole_mpc",
 ]
 
-class DoublePendulumParams:
-    def __init__(self,
-                 g=9.81,
-                 m1=1.0, m2=1.0,
-                 l1=1.0, l2=1.0,
-                 lc1=0.5, lc2=0.5,
-                 I1=0.2, I2=0.2,
-                 u_min=np.array([-12.0, -12.0], dtype=float),
-                 u_max=np.array([+12.0, +12.0], dtype=float),
-                 Q=np.diag([60.0, 2.0, 60.0, 2.0]),
-                 QT=np.diag([140.0, 5.0, 140.0, 5.0]),
-                 R=np.diag([1e-2, 1e-2]),
-                 x_ref=np.array([0.0, 0.0, 0.0, 0.0], dtype=float),
-                 dt=0.02,
-                 n_horizon=120,
-                 collocation_type='radau'):
-        self.g = g
-        self.m1, self.m2 = m1, m2
-        self.l1, self.l2 = l1, l2
-        self.lc1, self.lc2 = lc1, lc2
-        self.I1, self.I2 = I1, I2
-        self.u_min = np.array(u_min, dtype=float)
-        self.u_max = np.array(u_max, dtype=float)
-        self.Q  = np.array(Q,  dtype=float)
-        self.QT = np.array(QT, dtype=float)
-        self.R  = np.array(R,  dtype=float)
-        self.x_ref = np.array(x_ref, dtype=float)
-        self.dt = float(dt)
-        self.n_horizon = int(n_horizon)
-        self.collocation_type = collocation_type
 
 def _angle_wrap(x):
     return cs.atan2(cs.sin(x), cs.cos(x))
 
+
+def _as_1d_array(value) -> np.ndarray:
+    return np.asarray(value, dtype=float).reshape(-1)
+
+
+def _as_column_array(value) -> np.ndarray:
+    return np.asarray(value, dtype=float).reshape(-1, 1)
+
+
+def _as_scalar(value) -> float:
+    return float(np.asarray(value, dtype=float).reshape(-1)[0])
+
+
+def _simulator_t_step(simulator) -> float:
+    if hasattr(simulator, "t_step"):
+        return _as_scalar(simulator.t_step)
+    if hasattr(simulator, "settings") and hasattr(simulator.settings, "t_step"):
+        return _as_scalar(simulator.settings.t_step)
+    if hasattr(simulator, "_settings") and hasattr(simulator._settings, "t_step"):
+        return _as_scalar(simulator._settings.t_step)
+    raise AttributeError("Could not determine simulator time step.")
+
+
+def _reset_history_if_available(obj) -> None:
+    if hasattr(obj, "reset_history"):
+        try:
+            obj.reset_history()
+        except TypeError:
+            pass
+
+
+@dataclass
+class DoublePendulumParams:
+    g: float = 9.81
+    m1: float = 1.0
+    m2: float = 1.0
+    l1: float = 1.0
+    l2: float = 1.0
+    lc1: float = 0.5
+    lc2: float = 0.5
+    I1: float = 0.2
+    I2: float = 0.2
+    u_min: np.ndarray = field(
+        default_factory=lambda: np.array([-12.0, -12.0], dtype=float)
+    )
+    u_max: np.ndarray = field(
+        default_factory=lambda: np.array([12.0, 12.0], dtype=float)
+    )
+    Q: np.ndarray = field(
+        default_factory=lambda: np.diag([60.0, 2.0, 60.0, 2.0]).astype(float)
+    )
+    QT: np.ndarray = field(
+        default_factory=lambda: np.diag([140.0, 5.0, 140.0, 5.0]).astype(float)
+    )
+    R: np.ndarray = field(
+        default_factory=lambda: np.diag([1e-2, 1e-2]).astype(float)
+    )
+    x_ref: np.ndarray = field(
+        default_factory=lambda: np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
+    )
+    dt: float = 0.02
+    n_horizon: int = 120
+    collocation_type: str = "radau"
+
+    def __post_init__(self) -> None:
+        self.u_min = _as_1d_array(self.u_min)
+        self.u_max = _as_1d_array(self.u_max)
+        self.Q = np.asarray(self.Q, dtype=float)
+        self.QT = np.asarray(self.QT, dtype=float)
+        self.R = np.asarray(self.R, dtype=float)
+        self.x_ref = _as_1d_array(self.x_ref)
+        self.dt = float(self.dt)
+        self.n_horizon = int(self.n_horizon)
+
+
+@dataclass
+class SinglePendulumParams:
+    g: float = 9.81
+    m: float = 1.0
+    l: float = 2.0
+    I: float | None = None
+    damping: float = 0.02
+    u_min: np.ndarray = field(default_factory=lambda: np.array([-10.0], dtype=float))
+    u_max: np.ndarray = field(default_factory=lambda: np.array([10.0], dtype=float))
+    Q: np.ndarray = field(default_factory=lambda: np.diag([5.0, 1.0]).astype(float))
+    QT: np.ndarray = field(default_factory=lambda: np.diag([10.0, 3.0]).astype(float))
+    R: np.ndarray = field(default_factory=lambda: np.array([[1e-2]], dtype=float))
+    x_ref: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0], dtype=float))
+    dt: float = 0.02
+    n_horizon: int = 120
+    collocation_type: str = "radau"
+
+    def __post_init__(self) -> None:
+        if self.I is None:
+            self.I = self.m * self.l**2
+        self.u_min = _as_1d_array(self.u_min)
+        self.u_max = _as_1d_array(self.u_max)
+        self.Q = np.asarray(self.Q, dtype=float)
+        self.QT = np.asarray(self.QT, dtype=float)
+        self.R = np.asarray(self.R, dtype=float).reshape(1, 1)
+        self.x_ref = _as_1d_array(self.x_ref)
+        self.dt = float(self.dt)
+        self.n_horizon = int(self.n_horizon)
+
+
+@dataclass
+class SpringMassParams:
+    k_spring: float = 1.0
+    m: float = 1.0
+    damping: float = 0.05
+    u_min: np.ndarray = field(default_factory=lambda: np.array([-50.0], dtype=float))
+    u_max: np.ndarray = field(default_factory=lambda: np.array([50.0], dtype=float))
+    Q: np.ndarray = field(default_factory=lambda: np.diag([10.0, 1.0]).astype(float))
+    QT: np.ndarray = field(default_factory=lambda: np.diag([20.0, 2.0]).astype(float))
+    R: np.ndarray = field(default_factory=lambda: np.array([[1e-2]], dtype=float))
+    x_ref: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0], dtype=float))
+    dt: float = 0.02
+    n_horizon: int = 120
+    collocation_type: str = "radau"
+
+    def __post_init__(self) -> None:
+        self.u_min = _as_1d_array(self.u_min)
+        self.u_max = _as_1d_array(self.u_max)
+        self.Q = np.asarray(self.Q, dtype=float)
+        self.QT = np.asarray(self.QT, dtype=float)
+        self.R = np.asarray(self.R, dtype=float).reshape(1, 1)
+        self.x_ref = _as_1d_array(self.x_ref)
+        self.dt = float(self.dt)
+        self.n_horizon = int(self.n_horizon)
+
+
 def build_double_pendulum_mpc(cfg: DoublePendulumParams):
-    """
-    Build (model, mpc, simulator) for the double inverted pendulum with do-mpc.
-    Matches your original equations and cost setup.
-    """
-    # ----- model -----
-    model = do_mpc.model.Model('continuous')
+    model = do_mpc.model.Model("continuous")
 
-    th1  = model.set_variable('_x', 'th1')
-    th1d = model.set_variable('_x', 'th1d')
-    th2  = model.set_variable('_x', 'th2')
-    th2d = model.set_variable('_x', 'th2d')
+    th1 = model.set_variable("_x", "th1")
+    th1d = model.set_variable("_x", "th1d")
+    th2 = model.set_variable("_x", "th2")
+    th2d = model.set_variable("_x", "th2d")
 
-    tau1 = model.set_variable('_u', 'tau1')
-    tau2 = model.set_variable('_u', 'tau2')
+    tau1 = model.set_variable("_u", "tau1")
+    tau2 = model.set_variable("_u", "tau2")
 
     c2 = cs.cos(th2)
     s2 = cs.sin(th2)
 
-    d11 = cfg.I1 + cfg.I2 + cfg.m1*cfg.lc1**2 + cfg.m2*(cfg.l1**2 + cfg.lc2**2 + 2*cfg.l1*cfg.lc2*c2)
-    d12 = cfg.I2 + cfg.m2*(cfg.lc2**2 + cfg.l1*cfg.lc2*c2)
-    d21 = d12
-    d22 = cfg.I2 + cfg.m2*cfg.lc2**2
+    d11 = (
+        cfg.I1
+        + cfg.I2
+        + cfg.m1 * cfg.lc1**2
+        + cfg.m2 * (cfg.l1**2 + cfg.lc2**2 + 2.0 * cfg.l1 * cfg.lc2 * c2)
+    )
+    d12 = cfg.I2 + cfg.m2 * (cfg.lc2**2 + cfg.l1 * cfg.lc2 * c2)
+    d22 = cfg.I2 + cfg.m2 * cfg.lc2**2
     D = cs.vertcat(
         cs.hcat([d11, d12]),
-        cs.hcat([d21, d22])
+        cs.hcat([d12, d22]),
     )
 
-    h = cfg.m2*cfg.l1*cfg.lc2*s2
-    c1 = -2.0*h*th1d*th2d - h*th2d**2
-    c2_term = h*th1d**2
-    Cqd = cs.vertcat(c1, c2_term)
+    h = cfg.m2 * cfg.l1 * cfg.lc2 * s2
+    Cqd = cs.vertcat(
+        -2.0 * h * th1d * th2d - h * th2d**2,
+        h * th1d**2,
+    )
 
-    g1 = -(cfg.m1*cfg.lc1 + cfg.m2*cfg.l1)*cfg.g*cs.sin(th1) - cfg.m2*cfg.lc2*cfg.g*cs.sin(th1 + th2)
-    g2 = -cfg.m2*cfg.lc2*cfg.g*cs.sin(th1 + th2)
-    Gv = cs.vertcat(g1, g2)
+    Gv = cs.vertcat(
+        -(cfg.m1 * cfg.lc1 + cfg.m2 * cfg.l1) * cfg.g * cs.sin(th1)
+        - cfg.m2 * cfg.lc2 * cfg.g * cs.sin(th1 + th2),
+        -cfg.m2 * cfg.lc2 * cfg.g * cs.sin(th1 + th2),
+    )
 
-    tau = cs.vertcat(tau1, tau2)
-    rhs = tau - Cqd - Gv
-    ddq = cs.solve(D, rhs)
+    ddq = cs.solve(D, cs.vertcat(tau1, tau2) - Cqd - Gv)
 
-    model.set_rhs('th1',  th1d)
-    model.set_rhs('th1d', ddq[0])
-    model.set_rhs('th2',  th2d)
-    model.set_rhs('th2d', ddq[1])
-
+    model.set_rhs("th1", th1d)
+    model.set_rhs("th1d", ddq[0])
+    model.set_rhs("th2", th2d)
+    model.set_rhs("th2d", ddq[1])
     model.setup()
 
-    # ----- mpc -----
     mpc = do_mpc.controller.MPC(model)
-    setup_mpc = {
-        'n_horizon': cfg.n_horizon,
-        't_step': cfg.dt,
-        'state_discretization': 'collocation',
-        'collocation_type': cfg.collocation_type,
-        'n_robust': 0,
-        'store_full_solution': True,
-    }
-    mpc.set_param(**setup_mpc)
+    mpc.set_param(
+        n_horizon=cfg.n_horizon,
+        t_step=cfg.dt,
+        state_discretization="collocation",
+        collocation_type=cfg.collocation_type,
+        n_robust=0,
+        store_full_solution=True,
+    )
 
-    # cost
-    eth1  = _angle_wrap(th1  - cfg.x_ref[0])
-    eth1d =            (th1d - cfg.x_ref[1])
-    eth2  = _angle_wrap(th2  - cfg.x_ref[2])
-    eth2d =            (th2d - cfg.x_ref[3])
-    e_vec = cs.vertcat(eth1, eth1d, eth2, eth2d)
+    e_vec = cs.vertcat(
+        _angle_wrap(th1 - cfg.x_ref[0]),
+        th1d - cfg.x_ref[1],
+        _angle_wrap(th2 - cfg.x_ref[2]),
+        th2d - cfg.x_ref[3],
+    )
     u_vec = cs.vertcat(tau1, tau2)
-
-    lterm = cs.mtimes([e_vec.T, cfg.Q,  e_vec]) + cs.mtimes([u_vec.T, cfg.R, u_vec])
+    lterm = cs.mtimes([e_vec.T, cfg.Q, e_vec]) + cs.mtimes([u_vec.T, cfg.R, u_vec])
     mterm = cs.mtimes([e_vec.T, cfg.QT, e_vec])
 
     mpc.set_objective(mterm=mterm, lterm=lterm)
     mpc.set_rterm(tau1=1e-4, tau2=1e-4)
-
-    # input bounds
-    mpc.bounds['lower','_u','tau1'] = cfg.u_min[0]
-    mpc.bounds['upper','_u','tau1'] = cfg.u_max[0]
-    mpc.bounds['lower','_u','tau2'] = cfg.u_min[1]
-    mpc.bounds['upper','_u','tau2'] = cfg.u_max[1]
-
+    mpc.bounds["lower", "_u", "tau1"] = cfg.u_min[0]
+    mpc.bounds["upper", "_u", "tau1"] = cfg.u_max[0]
+    mpc.bounds["lower", "_u", "tau2"] = cfg.u_min[1]
+    mpc.bounds["upper", "_u", "tau2"] = cfg.u_max[1]
+    if hasattr(mpc, "settings") and hasattr(mpc.settings, "supress_ipopt_output"):
+        mpc.settings.supress_ipopt_output()
     mpc.setup()
 
-    # ----- simulator -----
     simulator = do_mpc.simulator.Simulator(model)
     simulator.set_param(t_step=cfg.dt)
     simulator.setup()
 
     return model, mpc, simulator
 
-def rollout_mpc(mpc, simulator, x0, sim_time=10.0, save_U=True, save_prefix=""):
-    """
-    Closed-loop rollout. Returns (T, X, U). Optionally saves U.npy/U.csv.
-    """
-    dt = simulator.t_step
-    N  = int(sim_time / dt)
 
-    X = np.zeros((N+1, 4), dtype=float)
-    U = np.zeros((N,   2), dtype=float)
-    T = np.zeros(N+1, dtype=float)
+def build_single_pendulum_mpc(cfg: SinglePendulumParams):
+    model = do_mpc.model.Model("continuous")
 
-    X[0] = np.array(x0, dtype=float)
-    mpc.x0 = np.array(x0, dtype=float)
-    simulator.x0 = np.array(x0, dtype=float)
-    mpc.set_initial_guess()
+    theta = model.set_variable("_x", "theta")
+    theta_dot = model.set_variable("_x", "theta_dot")
+    tau = model.set_variable("_u", "tau")
 
-    x = np.array(x0, dtype=float)
-    for k in range(N):
-        u = mpc.make_step(x)
-        x = simulator.make_step(u)
+    theta_dd = (
+        tau - cfg.m * cfg.g * cfg.l * cs.sin(theta) - cfg.damping * theta_dot
+    ) / cfg.I
 
-        X[k+1] = np.squeeze(x)
-        U[k]   = np.squeeze(u)
-        T[k+1] = T[k] + dt
-
-    if save_U:
-        base = (save_prefix + "_" if save_prefix else "")
-        np.save(base + "U.npy", U)
-        np.savetxt(base + "U.csv", U, delimiter=",")
-    return T, X, U
-
-class CartPoleParams:
-    def __init__(self,
-                 g=9.81,
-                 mc=1.0,           # cart mass
-                 mp=0.1,           # pole mass
-                 l=0.5,            # CoM distance from pivot
-                 Ip=0.0,           # pole inertia about its CoM (0 => point mass)
-                 u_min=-20.0,
-                 u_max=+20.0,
-                 Q=np.diag([5.0, 1.0, 60.0, 2.0]),   # [x, xd, th, thd]
-                 QT=np.diag([10.0, 2.0, 140.0, 5.0]),
-                 R=np.array([[1e-2]]),
-                 x_ref=np.array([0.0, 0.0, 0.0, 0.0], dtype=float),
-                 dt=0.02,
-                 n_horizon=120,
-                 collocation_type='radau'):
-        self.g = float(g)
-        self.mc = float(mc)
-        self.mp = float(mp)
-        self.l  = float(l)
-        self.Ip = float(Ip)
-        self.u_min = float(u_min)
-        self.u_max = float(u_max)
-        self.Q  = np.array(Q,  dtype=float)
-        self.QT = np.array(QT, dtype=float)
-        self.R  = np.array(R,  dtype=float).reshape(1, 1)
-        self.x_ref = np.array(x_ref, dtype=float)
-        self.dt = float(dt)
-        self.n_horizon = int(n_horizon)
-        self.collocation_type = collocation_type
-
-# same angle wrapper you already have
-def _angle_wrap(x):
-    return cs.atan2(cs.sin(x), cs.cos(x))
-
-# ---------------------------
-# Build do-mpc model/controller/simulator
-# ---------------------------
-def build_cart_pole_mpc(cfg: CartPoleParams):
-    """
-    Build (model, mpc, simulator) for a cart-pole.
-    States: x, xd, th, thd. Input: u (cart force).
-    th=0 is upright.
-    """
-    # ----- model -----
-    model = do_mpc.model.Model('continuous')
-
-    x   = model.set_variable('_x', 'x')     # cart position
-    xd  = model.set_variable('_x', 'xd')    # cart velocity
-    th  = model.set_variable('_x', 'th')    # pole angle (0=upright)
-    thd = model.set_variable('_x', 'thd')   # pole angular rate
-
-    u = model.set_variable('_u', 'u')       # cart force
-
-    c = cs.cos(th)
-    s = cs.sin(th)
-
-    # Inertia matrix D(q) with q=[x, th]
-    D11 = cfg.mc + cfg.mp
-    D12 = cfg.mp * cfg.l * c
-    D21 = D12
-    D22 = cfg.Ip + cfg.mp * cfg.l**2
-    D = cs.vertcat(
-        cs.hcat([D11, D12]),
-        cs.hcat([D21, D22])
-    )
-
-    # C(q,qd)qd
-    Cqd1 = - cfg.mp * cfg.l * s * thd**2
-    Cqd2 = 0.0
-    Cqd = cs.vertcat(Cqd1, Cqd2)
-
-    # Gravity
-    Gv = cs.vertcat(0.0, cfg.mp * cfg.g * cfg.l * s)
-
-    # Input mapping Bu = [u; 0]
-    Bu = cs.vertcat(u, 0.0)
-
-    # Accelerations [xdd; thdd]
-    rhs = Bu - Cqd - Gv
-    qdd = cs.solve(D, rhs)
-
-    # ---- correct RHS (set each state once) ----
-    model.set_rhs('x',   xd)
-    model.set_rhs('xd',  qdd[0])
-    model.set_rhs('th',  thd)     # only once
-    model.set_rhs('thd', qdd[1])
-
+    model.set_rhs("theta", theta_dot)
+    model.set_rhs("theta_dot", theta_dd)
     model.setup()
 
-    # ----- MPC -----
     mpc = do_mpc.controller.MPC(model)
-    setup_mpc = {
-        'n_horizon': cfg.n_horizon,
-        't_step': cfg.dt,
-        'state_discretization': 'collocation',
-        'collocation_type': cfg.collocation_type,
-        'n_robust': 0,
-        'store_full_solution': True,
-    }
-    mpc.set_param(**setup_mpc)
+    mpc.set_param(
+        n_horizon=cfg.n_horizon,
+        t_step=cfg.dt,
+        state_discretization="collocation",
+        collocation_type=cfg.collocation_type,
+        n_robust=0,
+        store_full_solution=True,
+    )
 
-    # Cost
-    ex   = (x  - cfg.x_ref[0])
-    exd  = (xd - cfg.x_ref[1])
-    eth  = _angle_wrap(th  - cfg.x_ref[2])
-    ethd = (thd - cfg.x_ref[3])
-
-    e_vec = cs.vertcat(ex, exd, eth, ethd)
-    u_vec = cs.vertcat(u)
-
-    lterm = cs.mtimes([e_vec.T, cfg.Q,  e_vec]) + cs.mtimes([u_vec.T, cfg.R, u_vec])
+    e_vec = cs.vertcat(
+        _angle_wrap(theta - cfg.x_ref[0]),
+        theta_dot - cfg.x_ref[1],
+    )
+    u_vec = cs.vertcat(tau)
+    lterm = cs.mtimes([e_vec.T, cfg.Q, e_vec]) + cs.mtimes([u_vec.T, cfg.R, u_vec])
     mterm = cs.mtimes([e_vec.T, cfg.QT, e_vec])
 
     mpc.set_objective(mterm=mterm, lterm=lterm)
-    mpc.set_rterm(u=1e-4)
-
-    # Input bounds
-    mpc.bounds['lower','_u','u'] = cfg.u_min
-    mpc.bounds['upper','_u','u'] = cfg.u_max
-
+    mpc.set_rterm(tau=1e-4)
+    mpc.bounds["lower", "_u", "tau"] = cfg.u_min[0]
+    mpc.bounds["upper", "_u", "tau"] = cfg.u_max[0]
+    if hasattr(mpc, "settings") and hasattr(mpc.settings, "supress_ipopt_output"):
+        mpc.settings.supress_ipopt_output()
     mpc.setup()
 
-    # ----- simulator -----
     simulator = do_mpc.simulator.Simulator(model)
     simulator.set_param(t_step=cfg.dt)
     simulator.setup()
@@ -296,35 +283,82 @@ def build_cart_pole_mpc(cfg: CartPoleParams):
     return model, mpc, simulator
 
 
-def rollout_cart_pole_mpc(mpc, simulator, x0, sim_time=10.0, save_U=True, save_prefix=""):
-    """
-    Closed-loop rollout for the cart-pole.
-    States order: [x, xd, th, thd]
-    Returns (T, X, U). Saves U.npy/CSV if requested.
-    """
-    dt = simulator.t_step
-    N  = int(sim_time / dt)
+def build_spring_mass_mpc(cfg: SpringMassParams):
+    model = do_mpc.model.Model("continuous")
 
-    X = np.zeros((N+1, 4), dtype=float)
-    U = np.zeros((N,   1), dtype=float)
-    T = np.zeros(N+1, dtype=float)
+    x_pos = model.set_variable("_x", "x_pos")
+    x_dot = model.set_variable("_x", "x_dot")
+    force = model.set_variable("_u", "force")
 
-    X[0] = np.array(x0, dtype=float)
-    mpc.x0 = np.array(x0, dtype=float)
-    simulator.x0 = np.array(x0, dtype=float)
+    x_ddot = (force - cfg.k_spring * x_pos - cfg.damping * x_dot) / cfg.m
+
+    model.set_rhs("x_pos", x_dot)
+    model.set_rhs("x_dot", x_ddot)
+    model.setup()
+
+    mpc = do_mpc.controller.MPC(model)
+    mpc.set_param(
+        n_horizon=cfg.n_horizon,
+        t_step=cfg.dt,
+        state_discretization="collocation",
+        collocation_type=cfg.collocation_type,
+        n_robust=0,
+        store_full_solution=True,
+    )
+
+    e_vec = cs.vertcat(
+        x_pos - cfg.x_ref[0],
+        x_dot - cfg.x_ref[1],
+    )
+    u_vec = cs.vertcat(force)
+    lterm = cs.mtimes([e_vec.T, cfg.Q, e_vec]) + cs.mtimes([u_vec.T, cfg.R, u_vec])
+    mterm = cs.mtimes([e_vec.T, cfg.QT, e_vec])
+
+    mpc.set_objective(mterm=mterm, lterm=lterm)
+    mpc.set_rterm(force=1e-4)
+    mpc.bounds["lower", "_u", "force"] = cfg.u_min[0]
+    mpc.bounds["upper", "_u", "force"] = cfg.u_max[0]
+    if hasattr(mpc, "settings") and hasattr(mpc.settings, "supress_ipopt_output"):
+        mpc.settings.supress_ipopt_output()
+    mpc.setup()
+
+    simulator = do_mpc.simulator.Simulator(model)
+    simulator.set_param(t_step=cfg.dt)
+    simulator.setup()
+
+    return model, mpc, simulator
+
+
+def rollout_mpc(mpc, simulator, x0, sim_time=10.0, save_U=True, save_prefix=""):
+    dt = _simulator_t_step(simulator)
+    num_steps = int(sim_time / dt)
+
+    x = _as_1d_array(x0)
+    mpc.x0 = x.copy()
+    simulator.x0 = x.copy()
+    _reset_history_if_available(mpc)
+    _reset_history_if_available(simulator)
     mpc.set_initial_guess()
 
-    x = np.array(x0, dtype=float)
-    for k in range(N):
-        u = mpc.make_step(x)      # shape (1,1)
-        x = simulator.make_step(u)
+    X = [x.copy()]
+    U = []
+    T = [0.0]
 
-        X[k+1] = np.squeeze(x)
-        U[k]   = np.squeeze(u)
-        T[k+1] = T[k] + dt
+    for _ in range(num_steps):
+        u = _as_1d_array(mpc.make_step(x))
+        x = _as_1d_array(simulator.make_step(_as_column_array(u)))
+
+        U.append(u.copy())
+        X.append(x.copy())
+        T.append(T[-1] + dt)
+
+    X = np.asarray(X, dtype=float)
+    U = np.asarray(U, dtype=float)
+    T = np.asarray(T, dtype=float)
 
     if save_U:
-        base = (save_prefix + "_" if save_prefix else "")
+        base = f"{save_prefix}_" if save_prefix else ""
         np.save(base + "U.npy", U)
         np.savetxt(base + "U.csv", U, delimiter=",")
+
     return T, X, U
