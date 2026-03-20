@@ -79,6 +79,15 @@ def _state_error_with_angles(x, target, angle_indices):
     return delta.astype(np.float32)
 
 
+def _clip_control(u, u_min=None, u_max=None):
+    u = np.asarray(u, dtype=np.float32)
+    if u_min is not None:
+        u = np.maximum(u, np.asarray(u_min, dtype=np.float32))
+    if u_max is not None:
+        u = np.minimum(u, np.asarray(u_max, dtype=np.float32))
+    return u.astype(np.float32)
+
+
 def _sample_single_initial_states(
     num_inits=50,
     seed=0,
@@ -292,10 +301,7 @@ class AffineFeedbackBackupController:
         else:
             error = _state_error_with_angles(x, self.target_state, self.angle_indices)
         u = self.bias - self.K @ error
-        if self.u_min is not None:
-            u = np.maximum(u, self.u_min)
-        if self.u_max is not None:
-            u = np.minimum(u, self.u_max)
+        u = _clip_control(u, self.u_min, self.u_max)
         return np.asarray(u, dtype=np.float32).reshape(self.control_dim)
 
 
@@ -477,6 +483,45 @@ def get_dynamics_l_numerical(x, u, f_continuous_fn, eps=1e-5):
     return float(np.linalg.norm(jac, 2))
 
 
+def _compute_rollout_metric_arrays(
+    spec: ChainPolicySpec,
+    X,
+    U,
+    eps_L=1e-5,
+):
+    X = np.asarray(X, dtype=float)
+    H = spec.compute_energy(X)
+    LH = spec.compute_lh(X)
+
+    control_count = max(X.shape[0] - 1, 0)
+    U = _ensure_control_shape(U, spec.control_dim)
+    if U.shape[0] < control_count:
+        pad = np.zeros((control_count - U.shape[0], spec.control_dim), dtype=float)
+        U = np.vstack([U, pad])
+    else:
+        U = U[:control_count]
+
+    l_dyn = np.zeros(control_count, dtype=float)
+    for idx in range(control_count):
+        l_dyn[idx] = get_dynamics_l_numerical(
+            X[idx], U[idx], spec.f_continuous_fn, eps=eps_L
+        )
+    return H, LH, l_dyn
+
+
+def _load_rollout_metric_arrays(save_path: Path, name: str):
+    h_path = save_path / f"H_total_{name}.npy"
+    lh_path = save_path / f"LH_{name}.npy"
+    ldyn_path = save_path / f"Ldyn_{name}.npy"
+    if not h_path.exists() or not lh_path.exists() or not ldyn_path.exists():
+        return None
+    return (
+        np.load(h_path),
+        np.load(lh_path),
+        np.load(ldyn_path),
+    )
+
+
 def save_rollout_metrics(
     spec: ChainPolicySpec,
     save_dir,
@@ -495,16 +540,12 @@ def save_rollout_metrics(
         if rollout is None:
             continue
         _, X, U = rollout
-        H = spec.compute_energy(X)
-        LH = spec.compute_lh(X)
-
-        control_count = max(X.shape[0] - 1, 0)
-        U = _ensure_control_shape(U, spec.control_dim)
-        l_dyn = np.zeros(control_count, dtype=float)
-        for idx in range(control_count):
-            l_dyn[idx] = get_dynamics_l_numerical(
-                X[idx], U[idx], spec.f_continuous_fn, eps=eps_L
-            )
+        H, LH, l_dyn = _compute_rollout_metric_arrays(
+            spec=spec,
+            X=X,
+            U=U,
+            eps_L=eps_L,
+        )
 
         np.save(save_path / f"H_total_{name}.npy", H)
         np.save(save_path / f"LH_{name}.npy", LH)
@@ -527,6 +568,7 @@ def generate_control_alphabet_from_rollout(
     U,
     H_array,
     LH_array,
+    l_dyns=None,
     rho=0.99,
     H_star=0.0,
     eta=0.0,
@@ -562,11 +604,19 @@ def generate_control_alphabet_from_rollout(
     else:
         U = U[:n_ctrl_needed]
 
-    l_dyns = np.zeros(n_ctrl_needed, dtype=float)
-    for idx in range(n_ctrl_needed):
-        l_dyns[idx] = get_dynamics_l_numerical(
-            X[idx], U[idx], spec.f_continuous_fn, eps=eps_L
-        )
+    if l_dyns is None:
+        l_dyns = np.zeros(n_ctrl_needed, dtype=float)
+        for idx in range(n_ctrl_needed):
+            l_dyns[idx] = get_dynamics_l_numerical(
+                X[idx], U[idx], spec.f_continuous_fn, eps=eps_L
+            )
+    else:
+        l_dyns = np.asarray(l_dyns, dtype=float).reshape(-1)
+        if l_dyns.size < n_ctrl_needed:
+            raise ValueError(
+                f"l_dyns must have at least {n_ctrl_needed} entries, got {l_dyns.size}"
+            )
+        l_dyns = l_dyns[:n_ctrl_needed]
 
     tubes = []
     i = 0
@@ -581,16 +631,18 @@ def generate_control_alphabet_from_rollout(
         best_tau = 0.0
 
         lookahead = min(int(max_lookahead), n_ctrl_needed - i)
+        l_h_interval = float(LH_array[i])
+        l_dyn_interval = 0.0
         for k in range(1, lookahead + 1):
             j = i + k
             tau = k * dt
+            l_h_interval = max(l_h_interval, float(LH_array[j]))
+            l_dyn_interval = max(l_dyn_interval, float(l_dyns[j - 1]))
             v_next = abs(float(H_array[j]) - float(H_star))
             numerator = rho * max(v_curr - eta, 0.0) - max(v_next - eta, 0.0)
             if numerator <= 0.0:
                 continue
 
-            l_h_interval = float(np.max(LH_array[i : j + 1]))
-            l_dyn_interval = float(np.max(l_dyns[i:j]))
             denom = l_h_interval * (rho + np.exp(l_dyn_interval * tau))
             if denom <= 0.0 or not np.isfinite(denom):
                 continue
@@ -604,9 +656,12 @@ def generate_control_alphabet_from_rollout(
         if best_r > r_min and best_steps > 0:
             end_idx = i + best_steps
             u_seq = U[i:end_idx].copy()
+            x_seq = X[i : end_idx + 1].copy()
             tubes.append(
                 {
                     "x_center": X[i].astype(np.float32),
+                    "x_end": X[end_idx].astype(np.float32),
+                    "x_seq": x_seq.astype(np.float32),
                     "u_control": U[i].astype(np.float32),
                     "u_seq": u_seq.astype(np.float32),
                     "radius": float(best_r),
@@ -666,15 +721,22 @@ def build_control_alphabet_from_saved_rollouts(
             continue
 
         T, X, U = rollout
-        h_path = save_path / f"H_total_{name}.npy"
-        lh_path = save_path / f"LH_{name}.npy"
-        if not h_path.exists() or not lh_path.exists():
+        metric_arrays = _load_rollout_metric_arrays(save_path, name)
+        if metric_arrays is None:
             if verbose:
-                print(f"[WARN] Missing energy files for {name}.")
-            continue
-
-        H_array = np.load(h_path)
-        LH_array = np.load(lh_path)
+                print(f"[INFO] Computing rollout metrics on the fly for {name}.")
+            H_array, LH_array, l_dyns = _compute_rollout_metric_arrays(
+                spec=spec,
+                X=X,
+                U=U,
+                eps_L=eps_L,
+            )
+            if save_metrics:
+                np.save(save_path / f"H_total_{name}.npy", H_array)
+                np.save(save_path / f"LH_{name}.npy", LH_array)
+                np.save(save_path / f"Ldyn_{name}.npy", l_dyns)
+        else:
+            H_array, LH_array, l_dyns = metric_arrays
 
         tubes = generate_control_alphabet_from_rollout(
             spec=spec,
@@ -683,6 +745,7 @@ def build_control_alphabet_from_saved_rollouts(
             U=U,
             H_array=H_array,
             LH_array=LH_array,
+            l_dyns=l_dyns,
             rho=rho,
             H_star=H_star,
             eta=eta,
@@ -736,11 +799,21 @@ class TubeController:
         eps=1e-9,
         execute_full_sequence=False,
         angle_indices=(),
+        target_state=None,
+        success_tol=None,
         distance_weights=None,
         radius_scale=1.0,
         enter_threshold=1.0,
         abort_threshold=1.5,
         outside_mode="nearest_control",
+        selection_mode="nearest",
+        stitch_top_k=8,
+        stitch_threshold=3.0,
+        stitch_entry_weight=1.0,
+        stitch_value_weight=0.35,
+        tracking_gain=None,
+        u_min=None,
+        u_max=None,
     ):
         self.eps = float(eps)
         self.execute_full_sequence = bool(execute_full_sequence)
@@ -750,31 +823,51 @@ class TubeController:
         self.abort_threshold = float(abort_threshold)
         self.outside_mode = str(outside_mode)
         self.backup_controller = backup_controller
+        self.selection_mode = str(selection_mode)
+        self.stitch_top_k = int(stitch_top_k)
+        self.stitch_threshold = float(stitch_threshold)
+        self.stitch_entry_weight = float(stitch_entry_weight)
+        self.stitch_value_weight = float(stitch_value_weight)
 
         centers = []
+        ends = []
         radii = []
         u_controls = []
         u_seqs = []
+        x_seqs = []
         meta = []
 
         for name, tube_list in all_alphabets_dict.items():
             for tube in tube_list:
                 x_center = np.asarray(tube["x_center"], dtype=np.float32).reshape(-1)
+                x_end = np.asarray(tube.get("x_end", x_center), dtype=np.float32).reshape(-1)
                 radius = float(tube["radius"])
                 u_seq = np.asarray(tube["u_seq"], dtype=np.float32)
+                x_seq = np.asarray(tube.get("x_seq", x_center[None, :]), dtype=np.float32)
                 u_control = np.asarray(tube.get("u_control", u_seq[0]), dtype=np.float32).reshape(-1)
 
-                if x_center.ndim != 1 or u_seq.ndim != 2 or u_seq.shape[0] < 1:
+                if (
+                    x_center.ndim != 1
+                    or x_end.ndim != 1
+                    or u_seq.ndim != 2
+                    or u_seq.shape[0] < 1
+                    or x_seq.ndim != 2
+                    or x_seq.shape[0] < 1
+                ):
                     continue
                 if not np.isfinite(x_center).all() or not np.isfinite(radius) or radius <= 0.0:
                     continue
-                if not np.isfinite(u_control).all() or not np.isfinite(u_seq).all():
+                if not np.isfinite(x_end).all():
+                    continue
+                if not np.isfinite(u_control).all() or not np.isfinite(u_seq).all() or not np.isfinite(x_seq).all():
                     continue
 
                 centers.append(x_center)
+                ends.append(x_end)
                 radii.append(radius)
                 u_controls.append(u_control)
                 u_seqs.append(u_seq)
+                x_seqs.append(x_seq)
                 meta.append(
                     {
                         "name": name,
@@ -787,12 +880,14 @@ class TubeController:
             raise RuntimeError("No valid tubes loaded. Check your control alphabet content.")
 
         self.centers = np.stack(centers, axis=0)
+        self.ends = np.stack(ends, axis=0)
         self.state_dim = self.centers.shape[1]
         self.control_dim = u_controls[0].shape[0]
         self.raw_radii = np.asarray(radii, dtype=np.float32)
         self.radii = np.maximum(self.raw_radii * self.radius_scale, self.eps)
         self.u_controls = np.stack(u_controls, axis=0)
         self.u_seqs = u_seqs
+        self.x_seqs = x_seqs
         self.meta = meta
         self.active_idx = None
         self.active_k = 0
@@ -802,11 +897,26 @@ class TubeController:
         else:
             self.distance_weights = np.asarray(distance_weights, dtype=np.float32).reshape(self.state_dim)
 
+        self.target_state = None if target_state is None else np.asarray(target_state, dtype=np.float32).reshape(self.state_dim)
+        self.success_tol = None if success_tol is None else np.asarray(success_tol, dtype=np.float32).reshape(self.state_dim)
         self.default_u = (
             np.zeros(self.control_dim, dtype=np.float32)
             if default_u is None
             else np.asarray(default_u, dtype=np.float32).reshape(self.control_dim)
         )
+        self.tracking_gain = None
+        if tracking_gain is not None:
+            gain = np.asarray(tracking_gain, dtype=np.float32)
+            if gain.ndim == 1:
+                gain = gain.reshape(1, -1)
+            if gain.shape != (self.control_dim, self.state_dim):
+                raise ValueError(
+                    f"tracking_gain must have shape ({self.control_dim}, {self.state_dim}), got {gain.shape}"
+                )
+            self.tracking_gain = gain
+        self.u_min = None if u_min is None else np.asarray(u_min, dtype=np.float32).reshape(self.control_dim)
+        self.u_max = None if u_max is None else np.asarray(u_max, dtype=np.float32).reshape(self.control_dim)
+        self.stitch_values = self._build_stitch_values()
 
         print(f"[TubeController] loaded {self.centers.shape[0]} tubes.")
         print(
@@ -815,6 +925,15 @@ class TubeController:
             f"{float(np.median(self.radii)):.3e}/"
             f"{float(np.max(self.radii)):.3e}"
         )
+        if self.selection_mode == "stitch":
+            finite_values = self.stitch_values[np.isfinite(self.stitch_values)]
+            if finite_values.size:
+                print(
+                    "[TubeController] stitch-value stats: min/med/max = "
+                    f"{float(np.min(finite_values)):.3e}/"
+                    f"{float(np.median(finite_values)):.3e}/"
+                    f"{float(np.max(finite_values)):.3e}"
+                )
 
     def reset_episode(self, x0=None):
         self.active_idx = None
@@ -829,13 +948,97 @@ class TubeController:
         weighted = diff * self.distance_weights[None, :]
         return np.linalg.norm(weighted, axis=1)
 
+    def _pairwise_distance(self, queries, refs):
+        queries = np.asarray(queries, dtype=np.float32)
+        refs = np.asarray(refs, dtype=np.float32)
+        diff = refs[None, :, :] - queries[:, None, :]
+        for idx in self.angle_indices:
+            diff[:, :, idx] = angle_normalize(diff[:, :, idx])
+        weighted = diff * self.distance_weights[None, None, :]
+        return np.linalg.norm(weighted, axis=2)
+
+    def _distance_to_target(self, centers):
+        if self.target_state is None:
+            return np.full(centers.shape[0], np.inf, dtype=np.float32)
+        return self._distance(self.target_state, centers).astype(np.float32)
+
+    def _build_stitch_values(self):
+        n_tubes = self.centers.shape[0]
+        if n_tubes == 0:
+            return np.array([], dtype=np.float32)
+        base_cost = self._distance_to_target(self.ends)
+        if self.success_tol is not None:
+            tol_scale = float(np.linalg.norm(self.success_tol * self.distance_weights) + self.eps)
+            base_cost = base_cost / tol_scale
+
+        pairwise_rhos = self._pairwise_distance(self.ends, self.centers) / (
+            self.radii[None, :] + self.eps
+        )
+        edge_weights = []
+        for idx in range(n_tubes):
+            neighbors = np.where(pairwise_rhos[idx] <= self.stitch_threshold)[0]
+            edge_weights.append(
+                [
+                    (int(jdx), float(1.0 + pairwise_rhos[idx, jdx]))
+                    for jdx in neighbors
+                    if int(jdx) != idx
+                ]
+            )
+
+        values = base_cost.astype(np.float32).copy()
+        for _ in range(n_tubes):
+            updated = False
+            for idx in range(n_tubes):
+                best_here = float(values[idx])
+                for jdx, weight in edge_weights[idx]:
+                    candidate = float(weight + values[jdx])
+                    if candidate + 1e-8 < best_here:
+                        best_here = candidate
+                if best_here + 1e-8 < float(values[idx]):
+                    values[idx] = best_here
+                    updated = True
+            if not updated:
+                break
+        return values
+
     def select_tube(self, x_current):
         x = np.asarray(x_current, dtype=np.float32).reshape(self.state_dim)
         dists = self._distance(x, self.centers)
         rhos = dists / (self.radii + self.eps)
-        best_idx = int(np.argmin(rhos))
+        if self.selection_mode != "stitch":
+            best_idx = int(np.argmin(rhos))
+            best_rho = float(rhos[best_idx])
+            return best_idx, best_rho
+
+        top_k = min(max(self.stitch_top_k, 1), rhos.size)
+        candidate_idxs = np.argsort(rhos)[:top_k]
+        candidate_scores = (
+            self.stitch_entry_weight * rhos[candidate_idxs]
+            + self.stitch_value_weight * self.stitch_values[candidate_idxs]
+        )
+        best_local = int(np.argmin(candidate_scores))
+        best_idx = int(candidate_idxs[best_local])
         best_rho = float(rhos[best_idx])
         return best_idx, best_rho
+
+    def _apply_tracking(self, tube_idx, step_idx, x_current, u_nominal):
+        u = np.asarray(u_nominal, dtype=np.float32).reshape(self.control_dim).copy()
+        if self.tracking_gain is None:
+            return u
+
+        x = np.asarray(x_current, dtype=np.float32).reshape(self.state_dim)
+        x_ref_seq = self.x_seqs[tube_idx]
+        ref_idx = min(max(int(step_idx), 0), x_ref_seq.shape[0] - 1)
+        x_ref = x_ref_seq[ref_idx]
+        err = _state_error_with_angles(x, x_ref, self.angle_indices)
+        u = u - self.tracking_gain @ err
+        return _clip_control(u, self.u_min, self.u_max)
+
+    def _start_sequence(self, tube_idx, x_current, status, rho):
+        self.active_idx = int(tube_idx)
+        self.active_k = 1
+        u0 = self._apply_tracking(self.active_idx, 0, x_current, self.u_seqs[self.active_idx][0])
+        return u0, status, rho
 
     def get_action(self, x_current):
         x = np.asarray(x_current, dtype=np.float32).reshape(self.state_dim)
@@ -847,7 +1050,7 @@ class TubeController:
             if active_rho <= self.abort_threshold:
                 u_seq = self.u_seqs[self.active_idx]
                 if self.active_k < u_seq.shape[0]:
-                    u = u_seq[self.active_k].copy()
+                    u = self._apply_tracking(self.active_idx, self.active_k, x, u_seq[self.active_k])
                     self.active_k += 1
                     return u, "Expert", active_rho
             self.active_idx = None
@@ -856,20 +1059,50 @@ class TubeController:
         best_idx, best_rho = self.select_tube(x)
         if best_rho <= self.enter_threshold:
             if self.execute_full_sequence:
-                self.active_idx = best_idx
-                self.active_k = 1
-                return self.u_seqs[best_idx][0].copy(), "Expert", best_rho
+                return self._start_sequence(best_idx, x, "Expert", best_rho)
             return self.u_controls[best_idx].copy(), "Expert", best_rho
 
         if self.outside_mode == "nearest_control":
             return self.u_controls[best_idx].copy(), "Nearest", best_rho
         if self.outside_mode == "nearest_sequence" and self.execute_full_sequence:
-            self.active_idx = best_idx
-            self.active_k = 1
-            return self.u_seqs[best_idx][0].copy(), "Nearest", best_rho
+            return self._start_sequence(best_idx, x, "Nearest", best_rho)
         if self.outside_mode == "backup" and self.backup_controller is not None:
             return self.backup_controller.get_action(x).copy(), "Backup", best_rho
         return self.default_u.copy(), "Default", best_rho
+
+
+def _run_chain_episode(spec: ChainPolicySpec, env, controller: TubeController, x0):
+    obs, _ = env.reset(options={"x0": x0})
+    controller.reset_episode(x0=obs)
+
+    done = False
+    has_succeeded = spec.check_success(obs)
+    expert_steps = 0
+    guided_steps = 0
+    total_steps = 0
+    rho_min_this = np.inf
+
+    while not done:
+        u, status, rho = controller.get_action(obs)
+        if status == "Expert":
+            expert_steps += 1
+        if status in {"Expert", "Nearest", "Backup"}:
+            guided_steps += 1
+        total_steps += 1
+        if np.isfinite(rho):
+            rho_min_this = min(rho_min_this, rho)
+
+        obs, _, terminated, truncated, _ = env.step(u)
+        if spec.check_success(obs):
+            has_succeeded = True
+        done = bool(terminated or truncated)
+
+    return {
+        "success": bool(has_succeeded),
+        "expert_ratio": expert_steps / max(total_steps, 1),
+        "guided_ratio": guided_steps / max(total_steps, 1),
+        "rho_min": rho_min_this if np.isfinite(rho_min_this) else np.nan,
+    }
 
 
 def evaluate_incremental_chain_policy(
@@ -891,6 +1124,8 @@ def evaluate_incremental_chain_policy(
 
     controller_kwargs = {} if controller_kwargs is None else dict(controller_kwargs)
     controller_kwargs.setdefault("angle_indices", spec.angle_indices)
+    controller_kwargs.setdefault("target_state", spec.target_state)
+    controller_kwargs.setdefault("success_tol", spec.success_tol)
     controller_kwargs.setdefault("distance_weights", np.ones(spec.state_dim, dtype=float))
     controller_kwargs.setdefault("default_u", np.zeros(spec.control_dim, dtype=np.float32))
 
@@ -919,36 +1154,13 @@ def evaluate_incremental_chain_policy(
 
         iterator = tqdm(init_states, desc=f"{spec.name}:k={k}", leave=False) if verbose else init_states
         for x0 in iterator:
-            obs, _ = env.reset(options={"x0": x0})
-            controller.reset_episode(x0=obs)
+            episode = _run_chain_episode(spec=spec, env=env, controller=controller, x0=x0)
 
-            done = False
-            has_succeeded = spec.check_success(obs)
-            expert_steps = 0
-            guided_steps = 0
-            total_steps = 0
-            rho_min_this = np.inf
-
-            while not done:
-                u, status, rho = controller.get_action(obs)
-                if status == "Expert":
-                    expert_steps += 1
-                if status in {"Expert", "Nearest", "Backup"}:
-                    guided_steps += 1
-                total_steps += 1
-                if np.isfinite(rho):
-                    rho_min_this = min(rho_min_this, rho)
-
-                obs, _, terminated, truncated, _ = env.step(u)
-                if spec.check_success(obs):
-                    has_succeeded = True
-                done = bool(terminated or truncated)
-
-            if has_succeeded:
+            if episode["success"]:
                 success_count += 1
-            expert_ratios.append(expert_steps / max(total_steps, 1))
-            guided_ratios.append(guided_steps / max(total_steps, 1))
-            rho_mins.append(rho_min_this if np.isfinite(rho_min_this) else np.nan)
+            expert_ratios.append(float(episode["expert_ratio"]))
+            guided_ratios.append(float(episode["guided_ratio"]))
+            rho_mins.append(float(episode["rho_min"]))
 
         rate = success_count / len(init_states)
         er_mean = float(np.nanmean(expert_ratios))
