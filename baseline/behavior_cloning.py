@@ -137,6 +137,7 @@ class BehaviorCloning:
         )
 
         self.policy.train()
+        loss_history = []
 
         for epoch in range(epochs):
             epoch_loss = 0.0
@@ -156,8 +157,11 @@ class BehaviorCloning:
                 num_batches += 1
 
             avg_loss = epoch_loss / max(1, num_batches)
+            loss_history.append(float(avg_loss))
             if verbose:
                 print(f"[BC] Epoch {epoch+1}/{epochs}, loss = {avg_loss:.6f}")
+        self.last_loss_history = loss_history
+        return loss_history
 
     @torch.no_grad()
     def act(self, obs: np.ndarray) -> np.ndarray:
