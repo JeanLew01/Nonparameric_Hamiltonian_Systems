@@ -186,6 +186,7 @@ def train_behavior_cloning_policy(
     actions,
     hidden_sizes=(64, 128, 64),
     lr=2e-3,
+    weight_decay=0.0,
     batch_size=256,
     epochs=200,
     seed=0,
@@ -226,6 +227,7 @@ def train_behavior_cloning_policy(
         obs_dim=train_states.shape[1],
         act_dim=spec.control_dim,
         lr=lr,
+        weight_decay=weight_decay,
         device=_resolve_device(device),
     )
     loss_history = trainer.train(

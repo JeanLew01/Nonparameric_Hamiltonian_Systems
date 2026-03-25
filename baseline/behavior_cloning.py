@@ -93,6 +93,7 @@ class BehaviorCloning:
         obs_dim: int,
         act_dim: int,
         lr: float = 3e-4,
+        weight_decay: float = 0.0,
         device: Optional[torch.device] = None,
     ):
         """
@@ -111,7 +112,11 @@ class BehaviorCloning:
 
         self.device = device
         self.policy = policy_class(obs_dim, act_dim).to(self.device)
-        self.optimizer = Adam(self.policy.parameters(), lr=lr)
+        self.optimizer = Adam(
+            self.policy.parameters(),
+            lr=lr,
+            weight_decay=float(weight_decay),
+        )
 
         self.loss_fn = nn.MSELoss()
 
