@@ -25,52 +25,52 @@ def angle_wrap(x):
     return (x + jnp.pi) % (2.0 * jnp.pi) - jnp.pi
 
 def state_error(x, x_ref):
-    """Angle errors wrapped, rates linear."""
-    th1, th1d, th2, th2d = x
-    r1, r1d, r2, r2d = x_ref
+    """Angle errors wrapped, momentum errors linear."""
+    th1, th2, p1, p2 = x
+    r1, r2, rp1, rp2 = x_ref
     return jnp.array(
         [
             angle_wrap(th1 - r1),
-            th1d - r1d,
             angle_wrap(th2 - r2),
-            th2d - r2d,
+            p1 - rp1,
+            p2 - rp2,
         ],
         dtype=jnp.float32,
     )
 
-def two_link_ddq(x, u):
-    th1, th1d, th2, th2d = x
-    tau1, tau2 = u
-
-    c2 = jnp.cos(th2)
-    s2 = jnp.sin(th2)
-
-    d11 = I1 + I2 + m1 * lc1**2 + m2 * (l1**2 + lc2**2 + 2 * l1 * lc2 * c2)
-    d12 = I2 + m2 * (lc2**2 + l1 * lc2 * c2)
-    d21 = d12
-    d22 = I2 + m2 * lc2**2
-    D = jnp.array([[d11, d12],
-                   [d21, d22]], dtype=jnp.float32)
-
-    h = m2 * l1 * lc2 * s2
-    c1 = -2.0 * h * th1d * th2d - h * th2d**2
-    c2_term = h * th1d**2
-    Cqd = jnp.array([c1, c2_term], dtype=jnp.float32)
-
-    g1 = -((m1 * lc1 + m2 * l1) * g * jnp.sin(th1) + m2 * lc2 * g * jnp.sin(th1 + th2))
-    g2 = -(m2 * lc2 * g * jnp.sin(th1 + th2))
-    Gv = jnp.array([g1, g2], dtype=jnp.float32)
-
-    tau = jnp.array([tau1, tau2], dtype=jnp.float32)
-    rhs = tau - Cqd - Gv
-    ddq = jnp.linalg.solve(D, rhs)
-    return ddq[0], ddq[1]
+def mass_matrix(q):
+    """Absolute-angle mass matrix in the manuscript's Hamiltonian model."""
+    th1, th2 = q
+    delta = th1 - th2
+    coupling = m2 * l1 * l2 * jnp.cos(delta)
+    return jnp.array(
+        [
+            [(m1 + m2) * l1**2, coupling],
+            [coupling, m2 * l2**2],
+        ],
+        dtype=jnp.float32,
+    )
 
 def f_continuous(x, u):
-    """State derivative: [th1d, th1dd, th2d, th2dd]."""
-    th1, th1d, th2, th2d = x
-    th1dd, th2dd = two_link_ddq(x, u)
-    return jnp.array([th1d, th1dd, th2d, th2dd], dtype=jnp.float32)
+    """State derivative in canonical coordinates [theta1, theta2, p1, p2]."""
+    th1, th2, p1, p2 = x
+    tau1, tau2 = u
+
+    q = jnp.array([th1, th2], dtype=jnp.float32)
+    p = jnp.array([p1, p2], dtype=jnp.float32)
+    M = mass_matrix(q)
+    q_dot = jnp.linalg.solve(M, p)
+    q1_dot, q2_dot = q_dot
+
+    delta = th1 - th2
+    s_delta = jnp.sin(delta)
+    coupling_grad = m2 * l1 * l2 * s_delta
+
+    dH_dth1 = coupling_grad * q1_dot * q2_dot + (m1 + m2) * g * l1 * jnp.sin(th1)
+    dH_dth2 = -coupling_grad * q1_dot * q2_dot + m2 * g * l2 * jnp.sin(th2)
+
+    p_dot = jnp.array([tau1 - dH_dth1, tau2 - dH_dth2], dtype=jnp.float32)
+    return jnp.array([q1_dot, q2_dot, p_dot[0], p_dot[1]], dtype=jnp.float32)
 
 def rk4_step(x, u, h):
     """RK4 integrator."""
@@ -91,9 +91,9 @@ def wrap_angle_np(theta: float) -> float:
 
 class DoublePendulumEnv(gym.Env):
     """
-    Double-pendulum swing-up / stabilization environment, Gymnasium-style.
+    Double pendulum environment in canonical Hamiltonian coordinates.
 
-    - Observation: [th1, th1d, th2, th2d] (angles in radians, rates in rad/s)
+    - Observation: [th1, th2, p1, p2]
     - Action: [tau1, tau2] (Nm), clipped to [u_min, u_max]
     """
 
@@ -103,14 +103,14 @@ class DoublePendulumEnv(gym.Env):
         self,
         dt=0.02,
         episode_seconds=8.0,
-        Q=np.diag([60.0, 2.0, 60.0, 2.0]),
+        Q=np.diag([60.0, 60.0, 2.0, 2.0]),
         R=np.diag([1e-2, 1e-2]),
-        QT=np.diag([140.0, 5.0, 140.0, 5.0]),
-        x_ref=np.array([0.0, 0.0, 0.0, 0.0]),
+        QT=np.diag([140.0, 140.0, 5.0, 5.0]),
+        x_ref=np.array([np.pi, np.pi, 0.0, 0.0]),
         u_min=np.array([-12.0, -12.0]),
         u_max=np.array([+12.0, +12.0]),
-        success_tol=np.array([0.1, 0.01, 0.1, 0.01]),
-        default_x0=np.array([np.pi, 0.0, 0.0, 0.0]),
+        success_tol=np.array([0.1, 0.1, 0.01, 0.01]),
+        default_x0=np.array([0.0, 0.0, 0.0, 0.0]),
         reset_noise_std=np.array([0.02, 0.02, 0.02, 0.02]),
         seed: int | None = None,
         # ===== 新增：用于 reward shaping 的 “成功半径” 和 bonus =====
@@ -143,7 +143,7 @@ class DoublePendulumEnv(gym.Env):
         self.nx = 4
         self.nu = 2
 
-        high_x = np.array([np.pi, np.inf, np.pi, np.inf], dtype=np.float32)
+        high_x = np.array([np.pi, np.pi, np.inf, np.inf], dtype=np.float32)
         self.observation_space = spaces.Box(
             low=-high_x, high=high_x, dtype=np.float32
         )
@@ -178,49 +178,38 @@ class DoublePendulumEnv(gym.Env):
         I1_local = 0.2
         I2_local = 0.2
 
-        th1  = cs.SX.sym("th1")
-        th1d = cs.SX.sym("th1d")
-        th2  = cs.SX.sym("th2")
-        th2d = cs.SX.sym("th2d")
+        th1 = cs.SX.sym("th1")
+        th2 = cs.SX.sym("th2")
+        p1 = cs.SX.sym("p1")
+        p2 = cs.SX.sym("p2")
         tau1 = cs.SX.sym("tau1")
         tau2 = cs.SX.sym("tau2")
 
-        x = cs.vertcat(th1, th1d, th2, th2d)
+        x = cs.vertcat(th1, th2, p1, p2)
         u = cs.vertcat(tau1, tau2)
 
-        c2 = cs.cos(th2)
-        s2 = cs.sin(th2)
-
-        d11 = (
-            I1_local
-            + I2_local
-            + m1_local * lc1_local**2
-            + m2_local * (l1_local**2 + lc2_local**2 + 2 * l1_local * lc2_local * c2)
-        )
-        d12 = I2_local + m2_local * (lc2_local**2 + l1_local * lc2_local * c2)
-        d21 = d12
-        d22 = I2_local + m2_local * lc2_local**2
+        delta = th1 - th2
+        coupling = m2_local * l1_local * l2_local * cs.cos(delta)
+        d11 = (m1_local + m2_local) * l1_local**2
+        d12 = coupling
+        d21 = coupling
+        d22 = m2_local * l2_local**2
         D = cs.vertcat(
             cs.hcat([d11, d12]),
             cs.hcat([d21, d22]),
         )
 
-        h = m2_local * l1_local * lc2_local * s2
-        c1 = -2.0 * h * th1d * th2d - h * th2d**2
-        c2_term = h * th1d**2
-        Cqd = cs.vertcat(c1, c2_term)
-
-        g1 = -(
-            (m1_local * lc1_local + m2_local * l1_local) * g_local * cs.sin(th1)
-            + m2_local * lc2_local * g_local * cs.sin(th1 + th2)
+        p = cs.vertcat(p1, p2)
+        D_inv = cs.inv(D)
+        V = -(m1_local + m2_local) * g_local * l1_local * cs.cos(th1) - m2_local * g_local * l2_local * cs.cos(th2)
+        H = 0.5 * cs.mtimes([p.T, D_inv, p]) + V
+        gradH = cs.gradient(H, x)
+        J = cs.vertcat(
+            cs.hcat([cs.SX.zeros(2, 2), cs.SX.eye(2)]),
+            cs.hcat([-cs.SX.eye(2), cs.SX.zeros(2, 2)]),
         )
-        g2 = -(m2_local * lc2_local * g_local * cs.sin(th1 + th2))
-        Gv = cs.vertcat(g1, g2)
-
-        rhs = u - Cqd - Gv
-        ddq = cs.solve(D, rhs)  # [th1dd, th2dd]
-
-        xdot = cs.vertcat(th1d, ddq[0], th2d, ddq[1])
+        Gmat = cs.vertcat(cs.SX.zeros(2, 2), cs.SX.eye(2))
+        xdot = J @ gradH + Gmat @ u
 
         self._f = cs.Function("f", [x, u], [xdot], ["x", "u"], ["xdot"])
 
@@ -293,14 +282,14 @@ class DoublePendulumEnv(gym.Env):
 
     def _state_error_np(self, x: np.ndarray, x_ref: np.ndarray) -> np.ndarray:
         """NumPy version of state error with angle wrap."""
-        th1, th1d, th2, th2d = x
-        r1, r1d, r2, r2d = x_ref
+        th1, th2, p1, p2 = x
+        r1, r2, rp1, rp2 = x_ref
         return np.array(
             [
                 wrap_angle_np(th1 - r1),
-                th1d - r1d,
                 wrap_angle_np(th2 - r2),
-                th2d - r2d,
+                p1 - rp1,
+                p2 - rp2,
             ],
             dtype=np.float32,
         )

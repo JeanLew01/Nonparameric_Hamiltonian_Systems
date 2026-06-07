@@ -369,10 +369,10 @@ class TubeController:
         execute_full_sequence=False,
         angle_indices=(0, 2),
         distance_weights=(1.0, 0.2, 1.0, 0.2),
-        radius_scale=10.0,
+        radius_scale=1.0,
         enter_threshold=1.0,
-        abort_threshold=1.5,
-        outside_mode="nearest_control",
+        abort_threshold=np.inf,
+        outside_mode="default",
     ):
         self.eps = float(eps)
         self.execute_full_sequence = bool(execute_full_sequence)
@@ -504,4 +504,3 @@ class TubeController:
             self.active_k = 1
             return self.u_seqs[best_idx][0].copy(), "Nearest", best_rho
         return self.default_u.copy(), "Default", best_rho
-

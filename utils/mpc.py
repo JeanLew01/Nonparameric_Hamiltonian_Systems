@@ -69,16 +69,16 @@ class DoublePendulumParams:
         default_factory=lambda: np.array([12.0, 12.0], dtype=float)
     )
     Q: np.ndarray = field(
-        default_factory=lambda: np.diag([60.0, 2.0, 60.0, 2.0]).astype(float)
+        default_factory=lambda: np.diag([60.0, 60.0, 2.0, 2.0]).astype(float)
     )
     QT: np.ndarray = field(
-        default_factory=lambda: np.diag([140.0, 5.0, 140.0, 5.0]).astype(float)
+        default_factory=lambda: np.diag([140.0, 140.0, 5.0, 5.0]).astype(float)
     )
     R: np.ndarray = field(
         default_factory=lambda: np.diag([1e-2, 1e-2]).astype(float)
     )
     x_ref: np.ndarray = field(
-        default_factory=lambda: np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
+        default_factory=lambda: np.array([np.pi, np.pi, 0.0, 0.0], dtype=float)
     )
     dt: float = 0.02
     n_horizon: int = 120
@@ -101,13 +101,12 @@ class SinglePendulumParams:
     m: float = 1.0
     l: float = 2.0
     I: float | None = None
-    damping: float = 0.02
-    u_min: np.ndarray = field(default_factory=lambda: np.array([-10.0], dtype=float))
-    u_max: np.ndarray = field(default_factory=lambda: np.array([10.0], dtype=float))
+    u_min: np.ndarray = field(default_factory=lambda: np.array([-20.0], dtype=float))
+    u_max: np.ndarray = field(default_factory=lambda: np.array([20.0], dtype=float))
     Q: np.ndarray = field(default_factory=lambda: np.diag([5.0, 1.0]).astype(float))
     QT: np.ndarray = field(default_factory=lambda: np.diag([10.0, 3.0]).astype(float))
     R: np.ndarray = field(default_factory=lambda: np.array([[1e-2]], dtype=float))
-    x_ref: np.ndarray = field(default_factory=lambda: np.array([0.0, 0.0], dtype=float))
+    x_ref: np.ndarray = field(default_factory=lambda: np.array([np.pi, 0.0], dtype=float))
     dt: float = 0.02
     n_horizon: int = 120
     collocation_type: str = "radau"
@@ -129,9 +128,8 @@ class SinglePendulumParams:
 class SpringMassParams:
     k_spring: float = 1.0
     m: float = 1.0
-    damping: float = 0.05
-    u_min: np.ndarray = field(default_factory=lambda: np.array([-50.0], dtype=float))
-    u_max: np.ndarray = field(default_factory=lambda: np.array([50.0], dtype=float))
+    u_min: np.ndarray = field(default_factory=lambda: np.array([-20.0], dtype=float))
+    u_max: np.ndarray = field(default_factory=lambda: np.array([20.0], dtype=float))
     Q: np.ndarray = field(default_factory=lambda: np.diag([10.0, 1.0]).astype(float))
     QT: np.ndarray = field(default_factory=lambda: np.diag([20.0, 2.0]).astype(float))
     R: np.ndarray = field(default_factory=lambda: np.array([[1e-2]], dtype=float))
@@ -155,47 +153,35 @@ def build_double_pendulum_mpc(cfg: DoublePendulumParams):
     model = do_mpc.model.Model("continuous")
 
     th1 = model.set_variable("_x", "th1")
-    th1d = model.set_variable("_x", "th1d")
     th2 = model.set_variable("_x", "th2")
-    th2d = model.set_variable("_x", "th2d")
+    p1 = model.set_variable("_x", "p1")
+    p2 = model.set_variable("_x", "p2")
 
     tau1 = model.set_variable("_u", "tau1")
     tau2 = model.set_variable("_u", "tau2")
 
-    c2 = cs.cos(th2)
-    s2 = cs.sin(th2)
-
-    d11 = (
-        cfg.I1
-        + cfg.I2
-        + cfg.m1 * cfg.lc1**2
-        + cfg.m2 * (cfg.l1**2 + cfg.lc2**2 + 2.0 * cfg.l1 * cfg.lc2 * c2)
-    )
-    d12 = cfg.I2 + cfg.m2 * (cfg.lc2**2 + cfg.l1 * cfg.lc2 * c2)
-    d22 = cfg.I2 + cfg.m2 * cfg.lc2**2
+    delta = th1 - th2
+    coupling = cfg.m2 * cfg.l1 * cfg.l2 * cs.cos(delta)
     D = cs.vertcat(
-        cs.hcat([d11, d12]),
-        cs.hcat([d12, d22]),
+        cs.hcat([(cfg.m1 + cfg.m2) * cfg.l1**2, coupling]),
+        cs.hcat([coupling, cfg.m2 * cfg.l2**2]),
     )
-
-    h = cfg.m2 * cfg.l1 * cfg.lc2 * s2
-    Cqd = cs.vertcat(
-        -2.0 * h * th1d * th2d - h * th2d**2,
-        h * th1d**2,
+    p = cs.vertcat(p1, p2)
+    D_inv = cs.inv(D)
+    V = -(cfg.m1 + cfg.m2) * cfg.g * cfg.l1 * cs.cos(th1) - cfg.m2 * cfg.g * cfg.l2 * cs.cos(th2)
+    H = 0.5 * cs.mtimes([p.T, D_inv, p]) + V
+    gradH = cs.gradient(H, cs.vertcat(th1, th2, p1, p2))
+    J = cs.vertcat(
+        cs.hcat([cs.SX.zeros(2, 2), cs.SX.eye(2)]),
+        cs.hcat([-cs.SX.eye(2), cs.SX.zeros(2, 2)]),
     )
+    G = cs.vertcat(cs.SX.zeros(2, 2), cs.SX.eye(2))
+    xdot = J @ gradH + G @ cs.vertcat(tau1, tau2)
 
-    Gv = cs.vertcat(
-        -(cfg.m1 * cfg.lc1 + cfg.m2 * cfg.l1) * cfg.g * cs.sin(th1)
-        - cfg.m2 * cfg.lc2 * cfg.g * cs.sin(th1 + th2),
-        -cfg.m2 * cfg.lc2 * cfg.g * cs.sin(th1 + th2),
-    )
-
-    ddq = cs.solve(D, cs.vertcat(tau1, tau2) - Cqd - Gv)
-
-    model.set_rhs("th1", th1d)
-    model.set_rhs("th1d", ddq[0])
-    model.set_rhs("th2", th2d)
-    model.set_rhs("th2d", ddq[1])
+    model.set_rhs("th1", xdot[0])
+    model.set_rhs("th2", xdot[1])
+    model.set_rhs("p1", xdot[2])
+    model.set_rhs("p2", xdot[3])
     model.setup()
 
     mpc = do_mpc.controller.MPC(model)
@@ -210,9 +196,9 @@ def build_double_pendulum_mpc(cfg: DoublePendulumParams):
 
     e_vec = cs.vertcat(
         _angle_wrap(th1 - cfg.x_ref[0]),
-        th1d - cfg.x_ref[1],
-        _angle_wrap(th2 - cfg.x_ref[2]),
-        th2d - cfg.x_ref[3],
+        _angle_wrap(th2 - cfg.x_ref[1]),
+        p1 - cfg.x_ref[2],
+        p2 - cfg.x_ref[3],
     )
     u_vec = cs.vertcat(tau1, tau2)
     lterm = cs.mtimes([e_vec.T, cfg.Q, e_vec]) + cs.mtimes([u_vec.T, cfg.R, u_vec])
@@ -239,15 +225,14 @@ def build_single_pendulum_mpc(cfg: SinglePendulumParams):
     model = do_mpc.model.Model("continuous")
 
     theta = model.set_variable("_x", "theta")
-    theta_dot = model.set_variable("_x", "theta_dot")
+    p = model.set_variable("_x", "p")
     tau = model.set_variable("_u", "tau")
 
-    theta_dd = (
-        tau - cfg.m * cfg.g * cfg.l * cs.sin(theta) - cfg.damping * theta_dot
-    ) / cfg.I
+    theta_dot = p / cfg.I
+    p_dot = tau - cfg.m * cfg.g * cfg.l * cs.sin(theta)
 
     model.set_rhs("theta", theta_dot)
-    model.set_rhs("theta_dot", theta_dd)
+    model.set_rhs("p", p_dot)
     model.setup()
 
     mpc = do_mpc.controller.MPC(model)
@@ -262,7 +247,7 @@ def build_single_pendulum_mpc(cfg: SinglePendulumParams):
 
     e_vec = cs.vertcat(
         _angle_wrap(theta - cfg.x_ref[0]),
-        theta_dot - cfg.x_ref[1],
+        p - cfg.x_ref[1],
     )
     u_vec = cs.vertcat(tau)
     lterm = cs.mtimes([e_vec.T, cfg.Q, e_vec]) + cs.mtimes([u_vec.T, cfg.R, u_vec])
@@ -286,14 +271,15 @@ def build_single_pendulum_mpc(cfg: SinglePendulumParams):
 def build_spring_mass_mpc(cfg: SpringMassParams):
     model = do_mpc.model.Model("continuous")
 
-    x_pos = model.set_variable("_x", "x_pos")
-    x_dot = model.set_variable("_x", "x_dot")
+    q = model.set_variable("_x", "q")
+    p = model.set_variable("_x", "p")
     force = model.set_variable("_u", "force")
 
-    x_ddot = (force - cfg.k_spring * x_pos - cfg.damping * x_dot) / cfg.m
+    q_dot = p / cfg.m
+    p_dot = force - cfg.k_spring * q
 
-    model.set_rhs("x_pos", x_dot)
-    model.set_rhs("x_dot", x_ddot)
+    model.set_rhs("q", q_dot)
+    model.set_rhs("p", p_dot)
     model.setup()
 
     mpc = do_mpc.controller.MPC(model)
@@ -307,8 +293,8 @@ def build_spring_mass_mpc(cfg: SpringMassParams):
     )
 
     e_vec = cs.vertcat(
-        x_pos - cfg.x_ref[0],
-        x_dot - cfg.x_ref[1],
+        q - cfg.x_ref[0],
+        p - cfg.x_ref[1],
     )
     u_vec = cs.vertcat(force)
     lterm = cs.mtimes([e_vec.T, cfg.Q, e_vec]) + cs.mtimes([u_vec.T, cfg.R, u_vec])

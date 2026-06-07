@@ -9,30 +9,30 @@ import casadi as cs
 
 k_spring = 1.0
 m = 1.0
-damping = 0.05
 
-u_min = jnp.array([-50.0], dtype=jnp.float32)
-u_max = jnp.array([+50.0], dtype=jnp.float32)
+u_min = jnp.array([-20.0], dtype=jnp.float32)
+u_max = jnp.array([+20.0], dtype=jnp.float32)
 
 
 def state_error(x, x_ref):
-    """Position and velocity error."""
-    x_pos, x_dot = x
+    """Position and momentum error."""
+    q, p = x
     r1, r2 = x_ref
-    return jnp.array([x_pos - r1, x_dot - r2], dtype=jnp.float32)
+    return jnp.array([q - r1, p - r2], dtype=jnp.float32)
 
 
-def spring_mass_acc(x, u):
-    x_pos, x_dot = x
+def spring_mass_pdot(x, u):
+    q, _p = x
     (force,) = u
-    return (force - k_spring * x_pos - damping * x_dot) / m
+    return -k_spring * q + force
 
 
 def f_continuous(x, u):
-    """State derivative: [x_dot, x_ddot]."""
-    x_pos, x_dot = x
-    x_ddot = spring_mass_acc(x, u)
-    return jnp.array([x_dot, x_ddot], dtype=jnp.float32)
+    """State derivative in canonical coordinates [q, p]."""
+    q, p = x
+    q_dot = p / m
+    p_dot = spring_mass_pdot(x, u)
+    return jnp.array([q_dot, p_dot], dtype=jnp.float32)
 
 
 def rk4_step(x, u, h):
@@ -52,12 +52,6 @@ def jax_dynamics(x, u, dt=0.01):
 
 
 class SpringMassEnv(gym.Env):
-    """
-    Mass-spring-damper environment, Gymnasium-style.
-
-    - Observation: [x, x_dot]
-    - Action: [force] (force/actuation), clipped to [u_min, u_max]
-    """
 
     metadata = {"render_modes": []}
 
@@ -69,8 +63,8 @@ class SpringMassEnv(gym.Env):
         R=np.array([[1e-2]], dtype=float),
         QT=np.diag([20.0, 2.0]),
         x_ref=np.array([0.0, 0.0], dtype=float),
-        u_min=np.array([-50.0], dtype=float),
-        u_max=np.array([+50.0], dtype=float),
+        u_min=np.array([-20.0], dtype=float),
+        u_max=np.array([+20.0], dtype=float),
         success_tol=np.array([0.02, 0.05], dtype=float),
         default_x0=np.array([1.0, 0.0], dtype=float),
         reset_noise_std=np.array([0.05, 0.05], dtype=float),
@@ -119,17 +113,17 @@ class SpringMassEnv(gym.Env):
     def _build_casadi_dynamics(self):
         k_spring_local = 1.0
         m_local = 1.0
-        damping_local = 0.05
 
-        x_pos = cs.SX.sym("x_pos")
-        x_dot = cs.SX.sym("x_dot")
+        q = cs.SX.sym("q")
+        p = cs.SX.sym("p")
         force = cs.SX.sym("force")
 
-        x = cs.vertcat(x_pos, x_dot)
+        x = cs.vertcat(q, p)
         u = cs.vertcat(force)
 
-        x_ddot = (force - k_spring_local * x_pos - damping_local * x_dot) / m_local
-        xdot = cs.vertcat(x_dot, x_ddot)
+        q_dot = p / m_local
+        p_dot = -k_spring_local * q + force
+        xdot = cs.vertcat(q_dot, p_dot)
         self._f = cs.Function("f", [x, u], [xdot], ["x", "u"], ["xdot"])
 
     def _build_casadi_integrator(self):
@@ -226,4 +220,3 @@ class SpringMassEnv(gym.Env):
             "success": success,
         }
         return obs, reward, terminated, truncated, info
-

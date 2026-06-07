@@ -11,10 +11,9 @@ g = 9.81
 m = 1.0
 l = 2.0
 I = m * l**2
-damping = 0.02
 
-u_min = jnp.array([-10.0], dtype=jnp.float32)
-u_max = jnp.array([+10.0], dtype=jnp.float32)
+u_min = jnp.array([-20.0], dtype=jnp.float32)
+u_max = jnp.array([+20.0], dtype=jnp.float32)
 
 
 def angle_wrap(x):
@@ -23,26 +22,27 @@ def angle_wrap(x):
 
 
 def state_error(x, x_ref):
-    """Angle error wrapped, angular rate linear."""
-    theta, theta_dot = x
+    """Angle error wrapped, momentum error linear."""
+    theta, p = x
     r1, r2 = x_ref
     return jnp.array(
-        [angle_wrap(theta - r1), theta_dot - r2],
+        [angle_wrap(theta - r1), p - r2],
         dtype=jnp.float32,
     )
 
 
-def single_pendulum_ddq(x, u):
-    theta, theta_dot = x
+def single_pendulum_pdot(x, u):
+    theta, _p = x
     (tau,) = u
-    return (tau - m * g * l * jnp.sin(theta) - damping * theta_dot) / I
+    return -m * g * l * jnp.sin(theta) + tau
 
 
 def f_continuous(x, u):
-    """State derivative: [theta_dot, theta_dd]."""
-    theta, theta_dot = x
-    theta_dd = single_pendulum_ddq(x, u)
-    return jnp.array([theta_dot, theta_dd], dtype=jnp.float32)
+    """State derivative in canonical coordinates [theta, p]."""
+    theta, p = x
+    theta_dot = p / I
+    p_dot = single_pendulum_pdot(x, u)
+    return jnp.array([theta_dot, p_dot], dtype=jnp.float32)
 
 
 def rk4_step(x, u, h):
@@ -67,9 +67,9 @@ def wrap_angle_np(theta: float) -> float:
 
 class SinglePendulumEnv(gym.Env):
     """
-    Single pendulum environment, Gymnasium-style.
+    Lossless single pendulum environment in canonical coordinates.
 
-    - Observation: [theta, theta_dot] (theta in radians, rate in rad/s)
+    - Observation: [theta, p] (theta in radians, momentum in Nms)
     - Action: [tau] (Nm), clipped to [u_min, u_max]
     """
 
@@ -82,11 +82,11 @@ class SinglePendulumEnv(gym.Env):
         Q=np.diag([5.0, 1.0]),
         R=np.array([[1e-2]], dtype=float),
         QT=np.diag([10.0, 3.0]),
-        x_ref=np.array([0.0, 0.0], dtype=float),
-        u_min=np.array([-10.0], dtype=float),
-        u_max=np.array([+10.0], dtype=float),
+        x_ref=np.array([np.pi, 0.0], dtype=float),
+        u_min=np.array([-20.0], dtype=float),
+        u_max=np.array([+20.0], dtype=float),
         success_tol=np.array([0.05, 0.05], dtype=float),
-        default_x0=np.array([np.pi, 0.0], dtype=float),
+        default_x0=np.array([0.0, 0.0], dtype=float),
         reset_noise_std=np.array([0.02, 0.02], dtype=float),
         seed: int | None = None,
         success_eps: float = 0.2,
@@ -135,17 +135,17 @@ class SinglePendulumEnv(gym.Env):
         m_local = 1.0
         l_local = 2.0
         I_local = m_local * l_local**2
-        damping_local = 0.02
 
         theta = cs.SX.sym("theta")
-        theta_dot = cs.SX.sym("theta_dot")
+        p = cs.SX.sym("p")
         tau = cs.SX.sym("tau")
 
-        x = cs.vertcat(theta, theta_dot)
+        x = cs.vertcat(theta, p)
         u = cs.vertcat(tau)
 
-        theta_dd = (tau - m_local * g_local * l_local * cs.sin(theta) - damping_local * theta_dot) / I_local
-        xdot = cs.vertcat(theta_dot, theta_dd)
+        theta_dot = p / I_local
+        p_dot = -m_local * g_local * l_local * cs.sin(theta) + tau
+        xdot = cs.vertcat(theta_dot, p_dot)
 
         self._f = cs.Function("f", [x, u], [xdot], ["x", "u"], ["xdot"])
 
@@ -208,10 +208,10 @@ class SinglePendulumEnv(gym.Env):
         return obs, info
 
     def _state_error_np(self, x: np.ndarray, x_ref: np.ndarray) -> np.ndarray:
-        theta, theta_dot = x
+        theta, p = x
         r1, r2 = x_ref
         return np.array(
-            [wrap_angle_np(theta - r1), theta_dot - r2],
+            [wrap_angle_np(theta - r1), p - r2],
             dtype=np.float32,
         )
 
@@ -245,4 +245,3 @@ class SinglePendulumEnv(gym.Env):
             "success": success,
         }
         return obs, reward, terminated, truncated, info
-

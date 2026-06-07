@@ -1,0 +1,18 @@
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Local virtual environments
+.venv/
+venv/
+
+# Notebook/runtime caches
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Experiment scratch files generated during parameter searches
+data/tmp_*.npz
+data/tmp_*.pkl
+
+# Local logs
+*.log
