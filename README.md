@@ -1,8 +1,6 @@
 # Nonparametric Hamiltonian Systems
 
-This package contains simulations for nonparametric control of Hamiltonian
-systems. The experiments compare the proposed Chain Policy with Vanilla
-Behavior Cloning on spring-mass, single-pendulum, and double-pendulum systems.
+This package is the code for paper ``Symplectic Inductive Bias for Data-Driven Target Reachability in Hamiltonian Systems". This package contains simulations for nonparametric control of Hamiltonian systems. The experiments compare the proposed Chain Policy with Vanilla Behavior Cloning on spring-mass, single-pendulum, and double-pendulum systems.
 
 ## Description
 
@@ -81,4 +79,17 @@ env MPLCONFIGDIR=/tmp/mpl-paper python \
   visualize_results.py \
   --data-dir data \
   --output-dir results
+```
+
+## Citation
+
+If you want cite this paper, plz use the following contents
+
+```bash
+@article{ouyang2026symplectic,
+  title={Symplectic Inductive Bias for Data-Driven Target Reachability in Hamiltonian Systems},
+  author={Ouyang, Zhuo and Liu, Jixian and Mallada, Enrique},
+  journal={arXiv preprint arXiv:2604.17213},
+  year={2026}
+}
 ```
