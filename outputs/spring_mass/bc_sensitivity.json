@@ -1,0 +1,1604 @@
+{
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "num_inits": 500,
+  "runs": [
+    {
+      "grid": "control",
+      "batch_size": 16,
+      "seed": 0,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0983408695165662,
+          "std_reach_time": 0.30362632581369603,
+          "mean_reach_time_successful": 1.0983408695165662
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0877001765251384,
+          "std_reach_time": 0.31249962280591004,
+          "mean_reach_time_successful": 1.0877001765251384
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.06963983410424,
+          "std_reach_time": 0.3165011665331507,
+          "mean_reach_time_successful": 1.06963983410424
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0570933704938632,
+          "std_reach_time": 0.3225282096869278,
+          "mean_reach_time_successful": 1.0570933704938632
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0531146256726513,
+          "std_reach_time": 0.3201448625844434,
+          "mean_reach_time_successful": 1.0531146256726513
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": 16,
+      "seed": 1,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.2960354659189717,
+          "std_reach_time": 0.374892569123055,
+          "mean_reach_time_successful": 1.2960354659189717
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.168188528125632,
+          "std_reach_time": 0.30877420399129807,
+          "mean_reach_time_successful": 1.168188528125632
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1344192571177982,
+          "std_reach_time": 0.318982634615622,
+          "mean_reach_time_successful": 1.1344192571177982
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0689610021387808,
+          "std_reach_time": 0.3189529184612939,
+          "mean_reach_time_successful": 1.0689610021387808
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0741899319317643,
+          "std_reach_time": 0.3196183465478883,
+          "mean_reach_time_successful": 1.0741899319317643
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": 16,
+      "seed": 2,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.179047876648499,
+          "std_reach_time": 0.3326533268565732,
+          "mean_reach_time_successful": 1.179047876648499
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.079313025474647,
+          "std_reach_time": 0.3105743366267419,
+          "mean_reach_time_successful": 1.079313025474647
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0935640243108076,
+          "std_reach_time": 0.31703809078110584,
+          "mean_reach_time_successful": 1.0935640243108076
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0746171965562226,
+          "std_reach_time": 0.3249289325428739,
+          "mean_reach_time_successful": 1.0746171965562226
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.060723747860581,
+          "std_reach_time": 0.32059962282608856,
+          "mean_reach_time_successful": 1.060723747860581
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": 16,
+      "seed": 3,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.030014864175891,
+          "std_reach_time": 0.2733125396011801,
+          "mean_reach_time_successful": 1.030014864175891
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0973528835972552,
+          "std_reach_time": 0.3047641470419569,
+          "mean_reach_time_successful": 1.0973528835972552
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1082112049319166,
+          "std_reach_time": 0.3196004683891324,
+          "mean_reach_time_successful": 1.1082112049319166
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.062364017563015,
+          "std_reach_time": 0.32156710633555,
+          "mean_reach_time_successful": 1.062364017563015
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0798264492503646,
+          "std_reach_time": 0.324324414432913,
+          "mean_reach_time_successful": 1.0798264492503646
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": 16,
+      "seed": 4,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.3808419306794926,
+          "std_reach_time": 0.37349045796683644,
+          "mean_reach_time_successful": 1.3808419306794926
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1101130416046705,
+          "std_reach_time": 0.30006079460723506,
+          "mean_reach_time_successful": 1.1101130416046705
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.081816039490125,
+          "std_reach_time": 0.30614517151605,
+          "mean_reach_time_successful": 1.081816039490125
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0706874306069802,
+          "std_reach_time": 0.32321196586733564,
+          "mean_reach_time_successful": 1.0706874306069802
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0688152633079024,
+          "std_reach_time": 0.31978681560238514,
+          "mean_reach_time_successful": 1.0688152633079024
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": 64,
+      "seed": 0,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.762925613680805,
+          "std_reach_time": 0.5546724558718159,
+          "mean_reach_time_successful": 1.762925613680805
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.064573137722403,
+          "std_reach_time": 0.29065005092934426,
+          "mean_reach_time_successful": 1.064573137722403
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0752315990646686,
+          "std_reach_time": 0.3075152383125392,
+          "mean_reach_time_successful": 1.0752315990646686
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0850414595237712,
+          "std_reach_time": 0.3170500082210817,
+          "mean_reach_time_successful": 1.0850414595237712
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0882226077235075,
+          "std_reach_time": 0.31993967696604375,
+          "mean_reach_time_successful": 1.0882226077235075
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": 64,
+      "seed": 1,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.186,
+          "mean_reach_time": 16.477433822012994,
+          "std_reach_time": 7.370967463810417,
+          "mean_reach_time_successful": 1.0614721613601719
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.3962312417092513,
+          "std_reach_time": 0.33864911169616246,
+          "mean_reach_time_successful": 1.3962312417092513
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.4112256235477443,
+          "std_reach_time": 0.3759722777632386,
+          "mean_reach_time_successful": 1.4112256235477443
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.3392442320017863,
+          "std_reach_time": 0.36613034351492235,
+          "mean_reach_time_successful": 1.3392442320017863
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.2055132853501926,
+          "std_reach_time": 0.3296449659454681,
+          "mean_reach_time_successful": 1.2055132853501926
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": 64,
+      "seed": 2,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.255234722547175,
+          "std_reach_time": 0.31082683802616473,
+          "mean_reach_time_successful": 1.255234722547175
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0737053114409705,
+          "std_reach_time": 0.29670329185648864,
+          "mean_reach_time_successful": 1.0737053114409705
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0596198300523811,
+          "std_reach_time": 0.303463312641331,
+          "mean_reach_time_successful": 1.0596198300523811
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0844880664872762,
+          "std_reach_time": 0.3174815527959619,
+          "mean_reach_time_successful": 1.0844880664872762
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0805377161113778,
+          "std_reach_time": 0.3220581711041273,
+          "mean_reach_time_successful": 1.0805377161113778
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": 64,
+      "seed": 3,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.717282597742793,
+          "std_reach_time": 0.49086765588056824,
+          "mean_reach_time_successful": 1.717282597742793
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1300340041592407,
+          "std_reach_time": 0.30685283310684275,
+          "mean_reach_time_successful": 1.1300340041592407
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1344064671740415,
+          "std_reach_time": 0.31972384971175066,
+          "mean_reach_time_successful": 1.1344064671740415
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1137527943993548,
+          "std_reach_time": 0.3218399982386711,
+          "mean_reach_time_successful": 1.1137527943993548
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1004098510547395,
+          "std_reach_time": 0.3168899403956073,
+          "mean_reach_time_successful": 1.1004098510547395
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": 64,
+      "seed": 4,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.3274354664787555,
+          "std_reach_time": 0.36370583598236567,
+          "mean_reach_time_successful": 1.3274354664787555
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1197177558292402,
+          "std_reach_time": 0.2946891306314488,
+          "mean_reach_time_successful": 1.1197177558292402
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1464239404213168,
+          "std_reach_time": 0.3164052024470977,
+          "mean_reach_time_successful": 1.1464239404213168
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.129133736021559,
+          "std_reach_time": 0.324233955204361,
+          "mean_reach_time_successful": 1.129133736021559
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1154153778841978,
+          "std_reach_time": 0.3226194230842894,
+          "mean_reach_time_successful": 1.1154153778841978
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": "full",
+      "seed": 0,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.234,
+          "mean_reach_time": 15.629589109145636,
+          "std_reach_time": 7.9108583367107705,
+          "mean_reach_time_successful": 1.3230303809642603
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.34190586157489,
+          "std_reach_time": 0.6238364608699772,
+          "mean_reach_time_successful": 2.34190586157489
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.1368604508142908,
+          "std_reach_time": 0.6986613040797988,
+          "mean_reach_time_successful": 2.1368604508142908
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.7863426334255332,
+          "std_reach_time": 0.5900263866093552,
+          "mean_reach_time_successful": 1.7863426334255332
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.8528548423583702,
+          "std_reach_time": 0.5976128912137707,
+          "mean_reach_time_successful": 1.8528548423583702
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": "full",
+      "seed": 1,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.446,
+          "mean_reach_time": 16.39751570521922,
+          "std_reach_time": 5.433485013215767,
+          "mean_reach_time_successful": 11.922680953406317
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 10.720953954703301,
+          "std_reach_time": 3.1007351975209456,
+          "mean_reach_time_successful": 10.720953954703301
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 0.486,
+          "mean_reach_time": 12.791649112340325,
+          "std_reach_time": 7.537788883417862,
+          "mean_reach_time_successful": 5.1680022887661
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 7.197751919822541,
+          "std_reach_time": 1.9943162479512024,
+          "mean_reach_time_successful": 7.197751919822541
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 8.087466127751332,
+          "std_reach_time": 2.5447123527615103,
+          "mean_reach_time_successful": 8.087466127751332
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": "full",
+      "seed": 2,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.318,
+          "mean_reach_time": 14.145207457151866,
+          "std_reach_time": 8.585268661121516,
+          "mean_reach_time_successful": 1.5887026954461152
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.783591114947533,
+          "std_reach_time": 0.6514587141847519,
+          "mean_reach_time_successful": 2.783591114947533
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.9880447847449845,
+          "std_reach_time": 1.0968656776141423,
+          "mean_reach_time_successful": 2.9880447847449845
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.182895091127227,
+          "std_reach_time": 0.6644948028882264,
+          "mean_reach_time_successful": 2.182895091127227
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.337254827118359,
+          "std_reach_time": 0.6757725367922085,
+          "mean_reach_time_successful": 2.337254827118359
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": "full",
+      "seed": 3,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.236,
+          "mean_reach_time": 15.613701818890087,
+          "std_reach_time": 7.8968783669419995,
+          "mean_reach_time_successful": 1.4139907580088449
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.769345374469164,
+          "std_reach_time": 0.7017281106917502,
+          "mean_reach_time_successful": 2.769345374469164
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 0.648,
+          "mean_reach_time": 8.41628593042386,
+          "std_reach_time": 8.567150101368842,
+          "mean_reach_time_successful": 2.1238980407775623
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.218097476541909,
+          "std_reach_time": 0.7294371789505997,
+          "mean_reach_time_successful": 2.218097476541909
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 0.94,
+          "mean_reach_time": 3.5517357509337497,
+          "std_reach_time": 4.260359048633441,
+          "mean_reach_time_successful": 2.5018465435465425
+        }
+      ]
+    },
+    {
+      "grid": "control",
+      "batch_size": "full",
+      "seed": 4,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.366,
+          "mean_reach_time": 13.66236651300002,
+          "std_reach_time": 8.378368970014144,
+          "mean_reach_time_successful": 2.6840615109290153
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 3.050591198526828,
+          "std_reach_time": 0.9545459244128163,
+          "mean_reach_time_successful": 3.050591198526828
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 0.154,
+          "mean_reach_time": 17.10061117990456,
+          "std_reach_time": 6.797459744057257,
+          "mean_reach_time_successful": 1.1727998695101265
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.211684963166236,
+          "std_reach_time": 0.7401597637670945,
+          "mean_reach_time_successful": 2.211684963166236
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.1622087985185274,
+          "std_reach_time": 0.7155777955075048,
+          "mean_reach_time_successful": 2.1622087985185274
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 16,
+      "seed": 0,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.024233305059572,
+          "std_reach_time": 0.2829751583708391,
+          "mean_reach_time_successful": 1.024233305059572
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0635531913333411,
+          "std_reach_time": 0.3074435831999251,
+          "mean_reach_time_successful": 1.0635531913333411
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0466809329037927,
+          "std_reach_time": 0.31456137236772785,
+          "mean_reach_time_successful": 1.0466809329037927
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0422651667787768,
+          "std_reach_time": 0.3259534684616374,
+          "mean_reach_time_successful": 1.0422651667787768
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0366692056157556,
+          "std_reach_time": 0.32445911047809,
+          "mean_reach_time_successful": 1.0366692056157556
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 16,
+      "seed": 1,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.2302515796962818,
+          "std_reach_time": 0.3629672527465499,
+          "mean_reach_time_successful": 1.2302515796962818
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1247395955741477,
+          "std_reach_time": 0.2953472513313178,
+          "mean_reach_time_successful": 1.1247395955741477
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0446320667150186,
+          "std_reach_time": 0.3094324096995871,
+          "mean_reach_time_successful": 1.0446320667150186
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0349779854425276,
+          "std_reach_time": 0.3229044369713783,
+          "mean_reach_time_successful": 1.0349779854425276
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0400863696934648,
+          "std_reach_time": 0.3249694569272186,
+          "mean_reach_time_successful": 1.0400863696934648
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 16,
+      "seed": 2,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0389107613057948,
+          "std_reach_time": 0.2868195227580609,
+          "mean_reach_time_successful": 1.0389107613057948
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0659534032763975,
+          "std_reach_time": 0.3080810509263071,
+          "mean_reach_time_successful": 1.0659534032763975
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0376795482237156,
+          "std_reach_time": 0.3113535913822235,
+          "mean_reach_time_successful": 1.0376795482237156
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0412066506546789,
+          "std_reach_time": 0.3252953223825339,
+          "mean_reach_time_successful": 1.0412066506546789
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0307698522562438,
+          "std_reach_time": 0.32168235025899017,
+          "mean_reach_time_successful": 1.0307698522562438
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 16,
+      "seed": 3,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0184377137591059,
+          "std_reach_time": 0.27819245446063745,
+          "mean_reach_time_successful": 1.0184377137591059
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0583534733597122,
+          "std_reach_time": 0.30858498380452465,
+          "mean_reach_time_successful": 1.0583534733597122
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.062003926293573,
+          "std_reach_time": 0.32105629876676933,
+          "mean_reach_time_successful": 1.062003926293573
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0159183299842267,
+          "std_reach_time": 0.31669015234328085,
+          "mean_reach_time_successful": 1.0159183299842267
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.039094765596932,
+          "std_reach_time": 0.3261131817802412,
+          "mean_reach_time_successful": 1.039094765596932
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 16,
+      "seed": 4,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.2639670404598637,
+          "std_reach_time": 0.3208595704304849,
+          "mean_reach_time_successful": 1.2639670404598637
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1097861603964607,
+          "std_reach_time": 0.3040910461091115,
+          "mean_reach_time_successful": 1.1097861603964607
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0619513204670439,
+          "std_reach_time": 0.32088546766735104,
+          "mean_reach_time_successful": 1.0619513204670439
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0373539713630557,
+          "std_reach_time": 0.32345890355688245,
+          "mean_reach_time_successful": 1.0373539713630557
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0300109856803916,
+          "std_reach_time": 0.32076732922641044,
+          "mean_reach_time_successful": 1.0300109856803916
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 64,
+      "seed": 0,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.08488851831874,
+          "std_reach_time": 0.2966945286407962,
+          "mean_reach_time_successful": 1.08488851831874
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0828850493334081,
+          "std_reach_time": 0.31284708779773934,
+          "mean_reach_time_successful": 1.0828850493334081
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0670769291696647,
+          "std_reach_time": 0.31575190994733876,
+          "mean_reach_time_successful": 1.0670769291696647
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0529209182425265,
+          "std_reach_time": 0.32511530020560453,
+          "mean_reach_time_successful": 1.0529209182425265
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0435342771743172,
+          "std_reach_time": 0.32579352119228916,
+          "mean_reach_time_successful": 1.0435342771743172
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 64,
+      "seed": 1,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.3382369313391131,
+          "std_reach_time": 0.35929185810569825,
+          "mean_reach_time_successful": 1.3382369313391131
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.145250902464805,
+          "std_reach_time": 0.2815560510508287,
+          "mean_reach_time_successful": 1.145250902464805
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.1037762630366155,
+          "std_reach_time": 0.3200708409085877,
+          "mean_reach_time_successful": 1.1037762630366155
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0346523991221914,
+          "std_reach_time": 0.321204311172269,
+          "mean_reach_time_successful": 1.0346523991221914
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0451633023763935,
+          "std_reach_time": 0.3249203818751022,
+          "mean_reach_time_successful": 1.0451633023763935
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 64,
+      "seed": 2,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.132082147150804,
+          "std_reach_time": 0.3203437920987235,
+          "mean_reach_time_successful": 1.132082147150804
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0725571673283212,
+          "std_reach_time": 0.30817675627142865,
+          "mean_reach_time_successful": 1.0725571673283212
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.106843004267286,
+          "std_reach_time": 0.32419760037114465,
+          "mean_reach_time_successful": 1.106843004267286
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.045980119658437,
+          "std_reach_time": 0.32320026558650233,
+          "mean_reach_time_successful": 1.045980119658437
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.039858032529286,
+          "std_reach_time": 0.32377170697286484,
+          "mean_reach_time_successful": 1.039858032529286
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 64,
+      "seed": 3,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.036392069910174,
+          "std_reach_time": 0.2806422200446248,
+          "mean_reach_time_successful": 1.036392069910174
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.091212628920665,
+          "std_reach_time": 0.3161894167636141,
+          "mean_reach_time_successful": 1.091212628920665
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0759978028286359,
+          "std_reach_time": 0.31477194131076025,
+          "mean_reach_time_successful": 1.0759978028286359
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0470191531415487,
+          "std_reach_time": 0.3262013834685209,
+          "mean_reach_time_successful": 1.0470191531415487
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0474283547157097,
+          "std_reach_time": 0.3267404975237565,
+          "mean_reach_time_successful": 1.0474283547157097
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": 64,
+      "seed": 4,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.3490869293544627,
+          "std_reach_time": 0.3379159881849716,
+          "mean_reach_time_successful": 1.3490869293544627
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.113791390793651,
+          "std_reach_time": 0.2985904433069512,
+          "mean_reach_time_successful": 1.113791390793651
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0775345106684717,
+          "std_reach_time": 0.31238755952248765,
+          "mean_reach_time_successful": 1.0775345106684717
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.0492170086565384,
+          "std_reach_time": 0.32462326634051575,
+          "mean_reach_time_successful": 1.0492170086565384
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.034992958093948,
+          "std_reach_time": 0.32227357844678234,
+          "mean_reach_time_successful": 1.034992958093948
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": "full",
+      "seed": 0,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.2,
+          "mean_reach_time": 16.250699899464088,
+          "std_reach_time": 7.5018081709574025,
+          "mean_reach_time_successful": 1.2534994973204348
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.394699142691806,
+          "std_reach_time": 0.6356346496953692,
+          "mean_reach_time_successful": 2.394699142691806
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.13962237617519,
+          "std_reach_time": 0.7198200366350104,
+          "mean_reach_time_successful": 2.13962237617519
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.780030574186698,
+          "std_reach_time": 0.5911653536271834,
+          "mean_reach_time_successful": 1.780030574186698
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 1.8339096603215244,
+          "std_reach_time": 0.5950992673866137,
+          "mean_reach_time_successful": 1.8339096603215244
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": "full",
+      "seed": 1,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.248,
+          "mean_reach_time": 17.70579237599394,
+          "std_reach_time": 4.887689734211338,
+          "mean_reach_time_successful": 10.749162806427181
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 11.318516135058514,
+          "std_reach_time": 2.943992285894305,
+          "mean_reach_time_successful": 11.318516135058514
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 0.572,
+          "mean_reach_time": 11.817646887602194,
+          "std_reach_time": 7.247007818591973,
+          "mean_reach_time_successful": 5.695186866437398
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 7.495789170812271,
+          "std_reach_time": 1.8706463684816217,
+          "mean_reach_time_successful": 7.495789170812271
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 0.996,
+          "mean_reach_time": 8.509360838425415,
+          "std_reach_time": 2.957015994449228,
+          "mean_reach_time_successful": 8.463213693198208
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": "full",
+      "seed": 2,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.26,
+          "mean_reach_time": 15.154650615722682,
+          "std_reach_time": 8.179765247442736,
+          "mean_reach_time_successful": 1.3640408297026156
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.8366203263628518,
+          "std_reach_time": 0.7130893884142949,
+          "mean_reach_time_successful": 2.8366203263628518
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 0.428,
+          "mean_reach_time": 12.39751616700098,
+          "std_reach_time": 8.809547156300544,
+          "mean_reach_time_successful": 2.237187306077055
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.2450654772225063,
+          "std_reach_time": 0.6554830045385066,
+          "mean_reach_time_successful": 2.2450654772225063
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.52198697987436,
+          "std_reach_time": 0.7677858800815308,
+          "mean_reach_time_successful": 2.52198697987436
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": "full",
+      "seed": 3,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.19,
+          "mean_reach_time": 16.447026221333697,
+          "std_reach_time": 7.339989140137661,
+          "mean_reach_time_successful": 1.3001380070194557
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.821794256951191,
+          "std_reach_time": 0.7189248153793454,
+          "mean_reach_time_successful": 2.821794256951191
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 0.77,
+          "mean_reach_time": 6.339940403655604,
+          "std_reach_time": 7.506133128091191,
+          "mean_reach_time_successful": 2.259662861890396
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.3193349807436867,
+          "std_reach_time": 0.6950174527019468,
+          "mean_reach_time_successful": 2.3193349807436867
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.714992134937744,
+          "std_reach_time": 1.0762463952977126,
+          "mean_reach_time_successful": 2.714992134937744
+        }
+      ]
+    },
+    {
+      "grid": "simulation",
+      "batch_size": "full",
+      "seed": 4,
+      "per_M": [
+        {
+          "M": 1,
+          "num_trajectories": 500,
+          "success_rate": 0.272,
+          "mean_reach_time": 15.284111658600366,
+          "std_reach_time": 7.749580200439004,
+          "mean_reach_time_successful": 2.662175215442526
+        },
+        {
+          "M": 2,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.9161787939495762,
+          "std_reach_time": 0.9191197060534224,
+          "mean_reach_time_successful": 2.9161787939495762
+        },
+        {
+          "M": 3,
+          "num_trajectories": 500,
+          "success_rate": 0.138,
+          "mean_reach_time": 17.398088892713538,
+          "std_reach_time": 6.50469881605975,
+          "mean_reach_time_successful": 1.1455716863299794
+        },
+        {
+          "M": 4,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.1833514263528295,
+          "std_reach_time": 0.727418034538803,
+          "mean_reach_time_successful": 2.1833514263528295
+        },
+        {
+          "M": 5,
+          "num_trajectories": 500,
+          "success_rate": 1.0,
+          "mean_reach_time": 2.1606870612740106,
+          "std_reach_time": 0.718908273353828,
+          "mean_reach_time_successful": 2.1606870612740106
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "control/batch=16": {
+      "success_mean": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "success_std": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "time_mean": [
+        1.196856201387884,
+        1.1085335310654685,
+        1.0975300719909773,
+        1.0667446034717725,
+        1.0673340036046528
+      ],
+      "time_std": [
+        0.1277072542515246,
+        0.03154072609813014,
+        0.022429553277945182,
+        0.006241343791852312,
+        0.009498897530989037
+      ]
+    },
+    "control/batch=64": {
+      "success_mean": [
+        0.8371999999999999,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "success_std": [
+        0.32560000000000006,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "time_mean": [
+        4.508062444492504,
+        1.1568522901722211,
+        1.1653814920520305,
+        1.1503320576867495,
+        1.1180197676248032
+      ],
+      "time_std": [
+        5.9881108157387155,
+        0.12233506332487322,
+        0.1273347637336057,
+        0.09599324386024269,
+        0.04530956317451552
+      ]
+    },
+    "control/batch=full": {
+      "success_mean": [
+        0.32,
+        1.0,
+        0.6576,
+        1.0,
+        0.9879999999999999
+      ],
+      "success_std": [
+        0.08055805360111427,
+        0.0,
+        0.3217536946174822,
+        0.0,
+        0.02400000000000002
+      ],
+      "time_mean": [
+        15.089676120681364,
+        4.333277500844344,
+        8.686690291645604,
+        3.119354416816689,
+        3.5983040693360677
+      ],
+      "time_std": [
+        1.0203712186207903,
+        3.2018952895298165,
+        5.711264338291661,
+        2.0456456479722176,
+        2.3174965983626987
+      ]
+    },
+    "simulation/batch=16": {
+      "success_mean": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "success_std": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "time_mean": [
+        1.1151600800561237,
+        1.0844771647880118,
+        1.0505895589206287,
+        1.034344420844653,
+        1.0353262357685575
+      ],
+      "time_std": [
+        0.1084678919471362,
+        0.027294681720176954,
+        0.009765396611258935,
+        0.009579227911869827,
+        0.0041875237138890645
+      ]
+    },
+    "simulation/batch=64": {
+      "success_mean": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "success_std": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "time_mean": [
+        1.1881373192146587,
+        1.1011394277681699,
+        1.086245701994135,
+        1.0459579197642483,
+        1.042195384977931
+      ],
+      "time_std": [
+        0.13058620788743364,
+        0.025902137547158845,
+        0.01599947233261391,
+        0.006132642404717995,
+        0.004366309832397481
+      ]
+    },
+    "simulation/batch=full": {
+      "success_mean": [
+        0.23399999999999999,
+        1.0,
+        0.5816,
+        1.0,
+        0.9992000000000001
+      ],
+      "success_std": [
+        0.03288768766575115,
+        0.0,
+        0.293604904591187,
+        0.0,
+        0.0016000000000000012
+      ],
+      "time_mean": [
+        16.168456154222955,
+        4.457561731002788,
+        10.018562945429501,
+        3.2047143258635984,
+        3.548187334966611
+      ],
+      "time_std": [
+        0.9227821878994262,
+        3.435320800678294,
+        5.271878089765275,
+        2.153650472439928,
+        2.498977746873626
+      ]
+    }
+  }
+}

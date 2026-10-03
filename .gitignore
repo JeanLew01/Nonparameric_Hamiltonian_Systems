@@ -10,9 +10,5 @@ venv/
 .ipynb_checkpoints/
 .pytest_cache/
 
-# Experiment scratch files generated during parameter searches
-data/tmp_*.npz
-data/tmp_*.pkl
-
 # Local logs
 *.log

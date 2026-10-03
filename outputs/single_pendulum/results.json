@@ -1,0 +1,1829 @@
+{
+  "system": "single_pendulum",
+  "config": {
+    "system_name": "single_pendulum",
+    "target_center": [
+      3.141592653589793,
+      0.0
+    ],
+    "experts": [
+      {
+        "name": "libration_rest",
+        "x0": [
+          0.0,
+          0.0
+        ],
+        "energy_cap": 39.24
+      },
+      {
+        "name": "rotation_cw",
+        "x0": [
+          1.5707963267948966,
+          -33.51178897045038
+        ],
+        "energy_cap": null
+      },
+      {
+        "name": "rotation_ccw",
+        "x0": [
+          -1.5707963267948966,
+          33.51178897045038
+        ],
+        "energy_cap": null
+      },
+      {
+        "name": "libration_right",
+        "x0": [
+          3.0,
+          0.0
+        ],
+        "energy_cap": 39.24
+      },
+      {
+        "name": "libration_left",
+        "x0": [
+          -3.0,
+          0.0
+        ],
+        "energy_cap": 39.24
+      }
+    ],
+    "horizon": 150.0,
+    "H_bar": 160.0,
+    "target_radius": 0.1,
+    "energy_eps": 0.001,
+    "demo_delta": 0.1,
+    "num_inits": 500,
+    "init_seed": 2026,
+    "control_period": 0.02,
+    "sim_dt": 0.005,
+    "num_demos": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "u_bound": 20.0,
+    "nmpc": {
+      "horizon": 100,
+      "Q": [
+        10.0,
+        0.1
+      ],
+      "Q_terminal": [
+        100.0,
+        1.0
+      ],
+      "R": 0.001,
+      "max_duration": 40.0
+    },
+    "chain": {
+      "v0": 0.001,
+      "lipschitz": "global",
+      "membership_tol": 1e-06,
+      "min_anchor_advance": 0.0001
+    },
+    "bc": {
+      "hidden_sizes": [
+        24,
+        24,
+        16
+      ],
+      "lr": 0.0012,
+      "weight_decay": 0.0005,
+      "epochs": 40,
+      "batch_size": 64,
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "angle_features": true,
+      "sample_grid": "control"
+    }
+  },
+  "target": {
+    "center": [
+      3.141592653589793,
+      0.0
+    ],
+    "radius": 0.1,
+    "H_min": 39.14198172275486,
+    "H_max": 39.24125,
+    "H_plus": 39.19161586137743,
+    "H_minus": 0.04963413862256871
+  },
+  "demonstrations": [
+    {
+      "id": 0,
+      "name": "libration_rest",
+      "x0": [
+        0.0,
+        0.0
+      ],
+      "duration": 3.435,
+      "num_steps": 687,
+      "max_abs_u": 20.0,
+      "H0": 0.0,
+      "H_min": 0.0,
+      "H_max": 39.23999955337924,
+      "final_state": [
+        3.1304602385964273,
+        0.0985436205260001
+      ],
+      "final_distance": 0.09917043818576596,
+      "final_delta_H": -0.0012518916106891709
+    },
+    {
+      "id": 1,
+      "name": "rotation_cw",
+      "x0": [
+        1.5707963267948966,
+        -33.51178897045038
+      ],
+      "duration": 4.01,
+      "num_steps": 802,
+      "max_abs_u": 20.0,
+      "H0": 160.0,
+      "H_min": 39.24024980579396,
+      "H_max": 160.0,
+      "final_state": [
+        -3.1320227853308253,
+        -0.09584245699544297
+      ],
+      "final_distance": 0.09631904765630385,
+      "final_delta_H": -0.00100019420603914
+    },
+    {
+      "id": 2,
+      "name": "rotation_ccw",
+      "x0": [
+        -1.5707963267948966,
+        33.51178897045038
+      ],
+      "duration": 4.01,
+      "num_steps": 802,
+      "max_abs_u": 20.0,
+      "H0": 160.0,
+      "H_min": 39.240249805793624,
+      "H_max": 160.0,
+      "final_state": [
+        3.132022785348674,
+        0.09584245684135508
+      ],
+      "final_distance": 0.09631904750120501,
+      "final_delta_H": -0.001000194206373095
+    },
+    {
+      "id": 3,
+      "name": "libration_right",
+      "x0": [
+        3.0,
+        0.0
+      ],
+      "duration": 1.23,
+      "num_steps": 246,
+      "max_abs_u": 15.467086018338213,
+      "H0": 39.04365278330074,
+      "H_min": 39.04365278330074,
+      "H_max": 39.23999955335712,
+      "final_state": [
+        3.1304816893328615,
+        0.09835344749994632
+      ],
+      "final_distance": 0.09897905920872105,
+      "final_delta_H": -0.001251891558435858
+    },
+    {
+      "id": 4,
+      "name": "libration_left",
+      "x0": [
+        -3.0,
+        0.0
+      ],
+      "duration": 1.23,
+      "num_steps": 246,
+      "max_abs_u": 15.46708601833815,
+      "H0": 39.04365278330074,
+      "H_min": 39.04365278330074,
+      "H_max": 39.23999955335713,
+      "final_state": [
+        -3.1304816893328598,
+        -0.09835344749995877
+      ],
+      "final_distance": 0.09897905920873362,
+      "final_delta_H": -0.001251891558435858
+    }
+  ],
+  "lipschitz": {
+    "L_H": 21.37796242137911,
+    "L": 19.62,
+    "H_X": 163.99428974763524
+  },
+  "assignment_set": {
+    "N": 48717,
+    "per_demo": [
+      1041,
+      22705,
+      22705,
+      1133,
+      1133
+    ],
+    "radius_min": 8.258282937644979e-09,
+    "radius_max": 0.11114902132454481,
+    "tau_min": 2.294056882247375e-05,
+    "tau_max": 0.785
+  },
+  "num_initial_states": 500,
+  "per_M": [
+    {
+      "M": 1,
+      "chain": {
+        "num_trajectories": 500,
+        "success_rate": 0.184,
+        "mean_reach_time": 123.22243388972538,
+        "std_reach_time": 56.40024144464917,
+        "mean_reach_time_successful": 4.469749400681402,
+        "num_assignments": 1041,
+        "assignments_per_demo": [
+          1041
+        ],
+        "rollout_extras": {
+          "n_snippets": {
+            "mean": 2.666,
+            "max": 17.0,
+            "sum": 1333.0
+          },
+          "exec_time": {
+            "mean": 0.15170449170278721,
+            "max": 1.082797214066572,
+            "sum": 75.8522458513936
+          },
+          "idle_time": {
+            "mean": 123.07072939802265,
+            "max": 150.0,
+            "sum": 61535.36469901133
+          },
+          "max_idle_interval": {
+            "mean": 0.9243753488841757,
+            "max": 7.910249013098463,
+            "sum": 462.1876744420879
+          },
+          "fallback_entries": {
+            "mean": 0.0,
+            "max": 0.0,
+            "sum": 0.0
+          },
+          "open_idle_interval": {
+            "mean": 121.74892760378256,
+            "max": 150.0,
+            "sum": 60874.46380189128
+          },
+          "final_energy": {
+            "mean": 71.32760110503035,
+            "max": 158.31276489827306,
+            "sum": 35663.800552515175
+          }
+        },
+        "T1_empirical": 7.910249013098463,
+        "T1_censored": true,
+        "theory": {
+          "N": 1041,
+          "per_demo": {
+            "0": 1041
+          },
+          "constants": {
+            "L_H": 21.37796242137911,
+            "L": 19.62,
+            "H_X": 163.99428974763524,
+            "C_f": 40.517531966066635,
+            "D_X": 71.72327613249826,
+            "mu_H": null,
+            "v0": 0.001,
+            "eps": 0.001,
+            "H_bar": 160.0,
+            "H_min": 39.14198172275486,
+            "H_max": 39.24125,
+            "c": 120.75875,
+            "lipschitz_mode": "global"
+          },
+          "radii": {
+            "min": 6.18220351708764e-06,
+            "max": 0.03234988947616926,
+            "mean": 0.010763575505390989,
+            "median": 0.007542458213078213
+          },
+          "durations": {
+            "min": 3.0198662576026435e-05,
+            "max": 0.32,
+            "mean": 0.06783296543483279,
+            "median": 0.07290156242600297
+          },
+          "tau_min": 3.0198662576026435e-05,
+          "condition1": {
+            "algebraic": {
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "max_residual": 7.105427357601002e-15
+            },
+            "empirical": {
+              "num_triples_checked": 300,
+              "points_per_triple": 13,
+              "num_points": 3900,
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "triples_violated_fraction": 0.0,
+              "max_margin": -0.00026440397674375865,
+              "boundary_max_margin": -0.00026440397674375865
+            }
+          },
+          "condition2": {
+            "required_intervals": [
+              [
+                0.0006550488594401979,
+                39.14198172275486
+              ],
+              [
+                39.24125,
+                160.0
+              ]
+            ],
+            "required_measure": 159.9000766738954,
+            "covered_fraction": 0.24478616576101653,
+            "uncovered_measure": 120.75874999999999,
+            "largest_gaps": [
+              [
+                39.24125,
+                160.0
+              ]
+            ],
+            "covered_fraction_including_band": 0.2448996912568372,
+            "support_energy_range": [
+              0.0,
+              39.18474973383359
+            ]
+          },
+          "condition3": {
+            "libration": {
+              "required_intervals": [
+                [
+                  0.0006550488594401979,
+                  39.14198172275486
+                ]
+              ],
+              "required_measure": 39.14132667389542,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 1041
+            },
+            "rotation_ccw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 0.0,
+              "uncovered_measure": 120.75874999999999,
+              "largest_gaps": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "num_balls": 0
+            },
+            "rotation_cw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 0.0,
+              "uncovered_measure": 120.75874999999999,
+              "largest_gaps": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "num_balls": 0
+            }
+          },
+          "lemma1": {
+            "v_upper_bound_LH_Cf": 866.1822757775993,
+            "T_eps_lower_bound": 1.1544914136026025e-06,
+            "v_eps_hat": 0.10793524232572142,
+            "v_eps_median": 36.50316642996666,
+            "v_eps_max": 43.69429618949548,
+            "num_rate_samples": 993,
+            "rates_below_bound": true,
+            "min_hitting_time": 0.004830198662575613,
+            "hitting_times_above_bound": true,
+            "v0_below_v_eps_hat": true
+          },
+          "theorem2": {
+            "executions_bound": 3998811196,
+            "condition1_holds": true,
+            "condition2_holds": false,
+            "condition3_holds": false,
+            "conditions_hold": false
+          },
+          "theorem3": {
+            "H1": 0.0,
+            "H2": 39.18474973383359,
+            "N": 1041,
+            "applicable": false,
+            "reason": "H is not strongly convex on X (Assumption 7 fails)"
+          },
+          "theorem4": {
+            "T1": 7.910249013098463,
+            "T1_censored": true,
+            "T2": null,
+            "tau_min": 3.0198662576026435e-05,
+            "applicable": false,
+            "reason": "Theorem 2's conditions do not hold for this K; T1 of Assumption 8 is unknown or right-censored (some excursions never returned)",
+            "T_bar_bound": 401634056613.59894,
+            "T_bar_bound_eq13": 31631713067.565834,
+            "T_max_bound": null
+          }
+        },
+        "timing": {
+          "rollout_s": 37.893994874999976,
+          "theory_s": 0.6723318729999619
+        }
+      },
+      "bc": {
+        "seeds": [
+          {
+            "seed": 0,
+            "num_trajectories": 500,
+            "success_rate": 0.004,
+            "mean_reach_time": 149.40076505621064,
+            "std_reach_time": 9.455768123844978,
+            "mean_reach_time_successful": 0.19126405266429447,
+            "timing": {
+              "train_s": 0.21014142800004265,
+              "rollout_s": 20.420938249000073
+            }
+          },
+          {
+            "seed": 1,
+            "num_trajectories": 500,
+            "success_rate": 0.004,
+            "mean_reach_time": 149.4008419323322,
+            "std_reach_time": 9.454555065190423,
+            "mean_reach_time_successful": 0.2104830830494115,
+            "timing": {
+              "train_s": 0.18907575700006873,
+              "rollout_s": 20.56894369500003
+            }
+          },
+          {
+            "seed": 2,
+            "num_trajectories": 500,
+            "success_rate": 0.004,
+            "mean_reach_time": 149.40069510099553,
+            "std_reach_time": 9.456871818210345,
+            "mean_reach_time_successful": 0.17377524888706172,
+            "timing": {
+              "train_s": 0.19344091599998592,
+              "rollout_s": 20.25663152100003
+            }
+          },
+          {
+            "seed": 3,
+            "num_trajectories": 500,
+            "success_rate": 0.004,
+            "mean_reach_time": 149.40102313854393,
+            "std_reach_time": 9.451696243905237,
+            "mean_reach_time_successful": 0.2557846359811245,
+            "timing": {
+              "train_s": 0.17149830899995777,
+              "rollout_s": 20.40571771700013
+            }
+          },
+          {
+            "seed": 4,
+            "num_trajectories": 500,
+            "success_rate": 0.004,
+            "mean_reach_time": 149.4007337315203,
+            "std_reach_time": 9.456262343957468,
+            "mean_reach_time_successful": 0.18343288007766123,
+            "timing": {
+              "train_s": 0.1592646369999784,
+              "rollout_s": 20.355278560999977
+            }
+          }
+        ],
+        "mean_over_seeds": {
+          "success_rate": 0.004,
+          "success_rate_std": 0.0,
+          "mean_reach_time": 149.40081179192052,
+          "mean_reach_time_std": 0.00011616390513500206
+        },
+        "pooled": {
+          "num_trajectories": 2500,
+          "success_rate": 0.004,
+          "mean_reach_time": 149.40081179192052,
+          "std_reach_time": 9.455030897368578,
+          "mean_reach_time_successful": 0.20294798013191068
+        },
+        "num_samples": 172,
+        "sample_grid": "control"
+      }
+    },
+    {
+      "M": 2,
+      "chain": {
+        "num_trajectories": 500,
+        "success_rate": 0.488,
+        "mean_reach_time": 78.85170197120861,
+        "std_reach_time": 72.88493022130142,
+        "mean_reach_time_successful": 4.204307318050458,
+        "num_assignments": 23746,
+        "assignments_per_demo": [
+          1041,
+          22705
+        ],
+        "rollout_extras": {
+          "n_snippets": {
+            "mean": 16.338,
+            "max": 54.0,
+            "sum": 8169.0
+          },
+          "exec_time": {
+            "mean": 0.9493933387643634,
+            "max": 3.183980701738676,
+            "sum": 474.6966693821817
+          },
+          "idle_time": {
+            "mean": 77.90230863244433,
+            "max": 150.0,
+            "sum": 38951.154316222164
+          },
+          "max_idle_interval": {
+            "mean": 1.1958540274626426,
+            "max": 7.910249013098463,
+            "sum": 597.9270137313213
+          },
+          "fallback_entries": {
+            "mean": 0.0,
+            "max": 0.0,
+            "sum": 0.0
+          },
+          "open_idle_interval": {
+            "mean": 76.14892760378257,
+            "max": 150.0,
+            "sum": 38074.46380189128
+          },
+          "final_energy": {
+            "mean": 55.38373584564912,
+            "max": 158.0176378446435,
+            "sum": 27691.86792282456
+          }
+        },
+        "T1_empirical": 7.910249013098463,
+        "T1_censored": true,
+        "theory": {
+          "N": 23746,
+          "per_demo": {
+            "0": 1041,
+            "1": 22705
+          },
+          "constants": {
+            "L_H": 21.37796242137911,
+            "L": 19.62,
+            "H_X": 163.99428974763524,
+            "C_f": 40.517531966066635,
+            "D_X": 71.72327613249826,
+            "mu_H": null,
+            "v0": 0.001,
+            "eps": 0.001,
+            "H_bar": 160.0,
+            "H_min": 39.14198172275486,
+            "H_max": 39.24125,
+            "c": 120.75875,
+            "lipschitz_mode": "global"
+          },
+          "radii": {
+            "min": 8.258282937644979e-09,
+            "max": 0.11114902132454481,
+            "mean": 0.0023247004437357585,
+            "median": 6.581967522531625e-05
+          },
+          "durations": {
+            "min": 3.0198662576026435e-05,
+            "max": 0.785,
+            "mean": 0.12383163907119843,
+            "median": 0.05839629545591521
+          },
+          "tau_min": 3.0198662576026435e-05,
+          "condition1": {
+            "algebraic": {
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "max_residual": 1.4210854715202004e-14
+            },
+            "empirical": {
+              "num_triples_checked": 300,
+              "points_per_triple": 13,
+              "num_points": 3900,
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "triples_violated_fraction": 0.0,
+              "max_margin": -1.5712260287432424e-05,
+              "boundary_max_margin": -1.5712260287432424e-05
+            }
+          },
+          "condition2": {
+            "required_intervals": [
+              [
+                0.0006550488594401979,
+                39.14198172275486
+              ],
+              [
+                39.24125,
+                160.0
+              ]
+            ],
+            "required_measure": 159.9000766738954,
+            "covered_fraction": 1.0,
+            "uncovered_measure": 0.0,
+            "largest_gaps": [],
+            "covered_fraction_including_band": 0.9996509027588498,
+            "support_energy_range": [
+              0.0,
+              162.3677867593885
+            ]
+          },
+          "condition3": {
+            "libration": {
+              "required_intervals": [
+                [
+                  0.0006550488594401979,
+                  39.14198172275486
+                ]
+              ],
+              "required_measure": 39.14132667389542,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 1041
+            },
+            "rotation_ccw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 0.0,
+              "uncovered_measure": 120.75874999999999,
+              "largest_gaps": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "num_balls": 0
+            },
+            "rotation_cw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 22705
+            }
+          },
+          "lemma1": {
+            "v_upper_bound_LH_Cf": 866.1822757775993,
+            "T_eps_lower_bound": 1.1544914136026025e-06,
+            "v_eps_hat": 0.0012833519965709912,
+            "v_eps_median": 0.08384440519480259,
+            "v_eps_max": 43.69429618949548,
+            "num_rate_samples": 23698,
+            "rates_below_bound": true,
+            "min_hitting_time": 0.004830198662575613,
+            "hitting_times_above_bound": true,
+            "v0_below_v_eps_hat": true
+          },
+          "theorem2": {
+            "executions_bound": 3998811196,
+            "condition1_holds": true,
+            "condition2_holds": true,
+            "condition3_holds": false,
+            "conditions_hold": false
+          },
+          "theorem3": {
+            "H1": 0.0,
+            "H2": 162.3677867593885,
+            "N": 23746,
+            "applicable": false,
+            "reason": "H is not strongly convex on X (Assumption 7 fails)"
+          },
+          "theorem4": {
+            "T1": 7.910249013098463,
+            "T1_censored": true,
+            "T2": null,
+            "tau_min": 3.0198662576026435e-05,
+            "applicable": false,
+            "reason": "Theorem 2's conditions do not hold for this K; T1 of Assumption 8 is unknown or right-censored (some excursions never returned)",
+            "T_bar_bound": 401634056613.59894,
+            "T_bar_bound_eq13": 31631713067.565834,
+            "T_max_bound": null
+          }
+        },
+        "timing": {
+          "rollout_s": 39.95134953900015,
+          "theory_s": 1.421613261999937
+        }
+      },
+      "bc": {
+        "seeds": [
+          {
+            "seed": 0,
+            "num_trajectories": 500,
+            "success_rate": 0.016,
+            "mean_reach_time": 147.63492796180392,
+            "std_reach_time": 18.547927241030365,
+            "mean_reach_time_successful": 2.182997612744506,
+            "timing": {
+              "train_s": 0.31834464000007756,
+              "rollout_s": 20.527522052999984
+            }
+          },
+          {
+            "seed": 1,
+            "num_trajectories": 500,
+            "success_rate": 0.008,
+            "mean_reach_time": 148.81044943642027,
+            "std_reach_time": 13.246778046674747,
+            "mean_reach_time_successful": 1.3061795525350293,
+            "timing": {
+              "train_s": 0.3123550880000039,
+              "rollout_s": 20.262487918999796
+            }
+          },
+          {
+            "seed": 2,
+            "num_trajectories": 500,
+            "success_rate": 0.024,
+            "mean_reach_time": 146.46242495539616,
+            "std_reach_time": 22.559934786327805,
+            "mean_reach_time_successful": 2.601039808174094,
+            "timing": {
+              "train_s": 0.3255807969999296,
+              "rollout_s": 20.26826180199987
+            }
+          },
+          {
+            "seed": 3,
+            "num_trajectories": 500,
+            "success_rate": 0.014,
+            "mean_reach_time": 147.92122933258727,
+            "std_reach_time": 17.44588822670975,
+            "mean_reach_time_successful": 1.5163808990897738,
+            "timing": {
+              "train_s": 0.3239546270001483,
+              "rollout_s": 20.375915179999993
+            }
+          },
+          {
+            "seed": 4,
+            "num_trajectories": 500,
+            "success_rate": 0.008,
+            "mean_reach_time": 148.81283163049235,
+            "std_reach_time": 13.220337962727301,
+            "mean_reach_time_successful": 1.6039538115445158,
+            "timing": {
+              "train_s": 0.33580490400004237,
+              "rollout_s": 20.880860539999958
+            }
+          }
+        ],
+        "mean_over_seeds": {
+          "success_rate": 0.014000000000000002,
+          "success_rate_std": 0.00593295878967653,
+          "mean_reach_time": 147.92837266333999,
+          "mean_reach_time_std": 0.8712623715785679
+        },
+        "pooled": {
+          "num_trajectories": 2500,
+          "success_rate": 0.014,
+          "mean_reach_time": 147.92837266334,
+          "std_reach_time": 17.38611649327132,
+          "mean_reach_time_successful": 2.0266188099997655
+        },
+        "num_samples": 373,
+        "sample_grid": "control"
+      }
+    },
+    {
+      "M": 3,
+      "chain": {
+        "num_trajectories": 500,
+        "success_rate": 1.0,
+        "mean_reach_time": 4.369262536811038,
+        "std_reach_time": 1.853227763856199,
+        "mean_reach_time_successful": 4.369262536811038,
+        "num_assignments": 46451,
+        "assignments_per_demo": [
+          1041,
+          22705,
+          22705
+        ],
+        "rollout_extras": {
+          "n_snippets": {
+            "mean": 34.332,
+            "max": 54.0,
+            "sum": 17166.0
+          },
+          "exec_time": {
+            "mean": 1.9941043313896176,
+            "max": 3.183980701738676,
+            "sum": 997.0521656948088
+          },
+          "idle_time": {
+            "mean": 2.3751582054214286,
+            "max": 12.56254087987834,
+            "sum": 1187.5791027107143
+          },
+          "max_idle_interval": {
+            "mean": 1.5153171519784363,
+            "max": 7.910249013098463,
+            "sum": 757.6585759892182
+          },
+          "fallback_entries": {
+            "mean": 0.002,
+            "max": 1.0,
+            "sum": 1.0
+          },
+          "open_idle_interval": {
+            "mean": 0.0,
+            "max": 0.0,
+            "sum": 0.0
+          },
+          "final_energy": {
+            "mean": 39.23309042091243,
+            "max": 39.240354360929146,
+            "sum": 19616.545210456217
+          }
+        },
+        "T1_empirical": 7.910249013098463,
+        "T1_censored": false,
+        "theory": {
+          "N": 46451,
+          "per_demo": {
+            "0": 1041,
+            "1": 22705,
+            "2": 22705
+          },
+          "constants": {
+            "L_H": 21.37796242137911,
+            "L": 19.62,
+            "H_X": 163.99428974763524,
+            "C_f": 40.517531966066635,
+            "D_X": 71.72327613249826,
+            "mu_H": null,
+            "v0": 0.001,
+            "eps": 0.001,
+            "H_bar": 160.0,
+            "H_min": 39.14198172275486,
+            "H_max": 39.24125,
+            "c": 120.75875,
+            "lipschitz_mode": "global"
+          },
+          "radii": {
+            "min": 8.258282937644979e-09,
+            "max": 0.11114902132454481,
+            "mean": 0.002135579242081314,
+            "median": 5.877042652003072e-05
+          },
+          "durations": {
+            "min": 3.0198662576026435e-05,
+            "max": 0.785,
+            "mean": 0.12508660930036228,
+            "median": 0.05834035095814727
+          },
+          "tau_min": 3.0198662576026435e-05,
+          "condition1": {
+            "algebraic": {
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "max_residual": 1.4210854715202004e-14
+            },
+            "empirical": {
+              "num_triples_checked": 300,
+              "points_per_triple": 13,
+              "num_points": 3900,
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "triples_violated_fraction": 0.0,
+              "max_margin": -9.234725490717306e-06,
+              "boundary_max_margin": -9.234725490717306e-06
+            }
+          },
+          "condition2": {
+            "required_intervals": [
+              [
+                0.0006550488594401979,
+                39.14198172275486
+              ],
+              [
+                39.24125,
+                160.0
+              ]
+            ],
+            "required_measure": 159.9000766738954,
+            "covered_fraction": 1.0,
+            "uncovered_measure": 0.0,
+            "largest_gaps": [],
+            "covered_fraction_including_band": 0.9996509027595736,
+            "support_energy_range": [
+              0.0,
+              162.3677867593885
+            ]
+          },
+          "condition3": {
+            "libration": {
+              "required_intervals": [
+                [
+                  0.0006550488594401979,
+                  39.14198172275486
+                ]
+              ],
+              "required_measure": 39.14132667389542,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 1041
+            },
+            "rotation_ccw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 22705
+            },
+            "rotation_cw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 22705
+            }
+          },
+          "lemma1": {
+            "v_upper_bound_LH_Cf": 866.1822757775993,
+            "T_eps_lower_bound": 1.1544914136026025e-06,
+            "v_eps_hat": 0.001283351978403989,
+            "v_eps_median": 0.07562862812793247,
+            "v_eps_max": 43.69429618949548,
+            "num_rate_samples": 46403,
+            "rates_below_bound": true,
+            "min_hitting_time": 0.004830198662575613,
+            "hitting_times_above_bound": true,
+            "v0_below_v_eps_hat": true
+          },
+          "theorem2": {
+            "executions_bound": 3998811196,
+            "condition1_holds": true,
+            "condition2_holds": true,
+            "condition3_holds": true,
+            "conditions_hold": true
+          },
+          "theorem3": {
+            "H1": 0.0,
+            "H2": 162.3677867593885,
+            "N": 46451,
+            "applicable": false,
+            "reason": "H is not strongly convex on X (Assumption 7 fails)"
+          },
+          "theorem4": {
+            "T1": 7.910249013098463,
+            "T1_censored": false,
+            "T2": null,
+            "tau_min": 3.0198662576026435e-05,
+            "applicable": true,
+            "reason": null,
+            "T_bar_bound": 401634056613.59894,
+            "T_bar_bound_eq13": 31631713067.565834,
+            "T_max_bound": null
+          }
+        },
+        "timing": {
+          "rollout_s": 16.77852992499993,
+          "theory_s": 2.2592659809999986
+        }
+      },
+      "bc": {
+        "seeds": [
+          {
+            "seed": 0,
+            "num_trajectories": 500,
+            "success_rate": 0.058,
+            "mean_reach_time": 141.5004778998032,
+            "std_reach_time": 34.25505539368548,
+            "mean_reach_time_successful": 3.4565155138478256,
+            "timing": {
+              "train_s": 0.501979825999797,
+              "rollout_s": 19.81497094800011
+            }
+          },
+          {
+            "seed": 1,
+            "num_trajectories": 500,
+            "success_rate": 0.08,
+            "mean_reach_time": 138.28886833733446,
+            "std_reach_time": 39.71601970112123,
+            "mean_reach_time_successful": 3.610854216680522,
+            "timing": {
+              "train_s": 0.5909767729999658,
+              "rollout_s": 19.54343327699985
+            }
+          },
+          {
+            "seed": 2,
+            "num_trajectories": 500,
+            "success_rate": 0.016,
+            "mean_reach_time": 147.63780635291727,
+            "std_reach_time": 18.525116587776754,
+            "mean_reach_time_successful": 2.3628970573302506,
+            "timing": {
+              "train_s": 0.5291665519998787,
+              "rollout_s": 20.252606173999993
+            }
+          },
+          {
+            "seed": 3,
+            "num_trajectories": 500,
+            "success_rate": 0.152,
+            "mean_reach_time": 127.7105091080928,
+            "std_reach_time": 52.649655735457,
+            "mean_reach_time_successful": 3.3586125532420126,
+            "timing": {
+              "train_s": 0.5276259199999913,
+              "rollout_s": 19.603405317000124
+            }
+          },
+          {
+            "seed": 4,
+            "num_trajectories": 500,
+            "success_rate": 0.086,
+            "mean_reach_time": 137.42752388145675,
+            "std_reach_time": 40.98976973296073,
+            "mean_reach_time_successful": 3.808417226241422,
+            "timing": {
+              "train_s": 0.48235060799993335,
+              "rollout_s": 19.44511544199986
+            }
+          }
+        ],
+        "mean_over_seeds": {
+          "success_rate": 0.0784,
+          "success_rate_std": 0.044242965542558285,
+          "mean_reach_time": 138.5130371159209,
+          "mean_reach_time_std": 6.482428835691743
+        },
+        "pooled": {
+          "num_trajectories": 2500,
+          "success_rate": 0.0784,
+          "mean_reach_time": 138.5130371159209,
+          "std_reach_time": 39.38580423296535,
+          "mean_reach_time_successful": 3.4826162745011424
+        },
+        "num_samples": 574,
+        "sample_grid": "control"
+      }
+    },
+    {
+      "M": 4,
+      "chain": {
+        "num_trajectories": 500,
+        "success_rate": 1.0,
+        "mean_reach_time": 4.2949439041735245,
+        "std_reach_time": 1.680358852550012,
+        "mean_reach_time_successful": 4.2949439041735245,
+        "num_assignments": 47584,
+        "assignments_per_demo": [
+          1041,
+          22705,
+          22705,
+          1133
+        ],
+        "rollout_extras": {
+          "n_snippets": {
+            "mean": 34.432,
+            "max": 54.0,
+            "sum": 17216.0
+          },
+          "exec_time": {
+            "mean": 1.9957955133017868,
+            "max": 3.183980701738676,
+            "sum": 997.8977566508934
+          },
+          "idle_time": {
+            "mean": 2.2991483908717454,
+            "max": 11.643194896819091,
+            "sum": 1149.5741954358728
+          },
+          "max_idle_interval": {
+            "mean": 1.4669644816560123,
+            "max": 7.124761326708491,
+            "sum": 733.4822408280062
+          },
+          "fallback_entries": {
+            "mean": 0.002,
+            "max": 1.0,
+            "sum": 1.0
+          },
+          "open_idle_interval": {
+            "mean": 0.0,
+            "max": 0.0,
+            "sum": 0.0
+          },
+          "final_energy": {
+            "mean": 39.233749880039205,
+            "max": 39.240354360929146,
+            "sum": 19616.874940019603
+          }
+        },
+        "T1_empirical": 7.124761326708491,
+        "T1_censored": false,
+        "theory": {
+          "N": 47584,
+          "per_demo": {
+            "0": 1041,
+            "1": 22705,
+            "2": 22705,
+            "3": 1133
+          },
+          "constants": {
+            "L_H": 21.37796242137911,
+            "L": 19.62,
+            "H_X": 163.99428974763524,
+            "C_f": 40.517531966066635,
+            "D_X": 71.72327613249826,
+            "mu_H": null,
+            "v0": 0.001,
+            "eps": 0.001,
+            "H_bar": 160.0,
+            "H_min": 39.14198172275486,
+            "H_max": 39.24125,
+            "c": 120.75875,
+            "lipschitz_mode": "global"
+          },
+          "radii": {
+            "min": 8.258282937644979e-09,
+            "max": 0.11114902132454481,
+            "mean": 0.002100152798601953,
+            "median": 6.608658170599832e-05
+          },
+          "durations": {
+            "min": 2.294056882968576e-05,
+            "max": 0.785,
+            "mean": 0.12327954204193711,
+            "median": 0.05829629565791919
+          },
+          "tau_min": 2.294056882968576e-05,
+          "condition1": {
+            "algebraic": {
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "max_residual": 1.4210854715202004e-14
+            },
+            "empirical": {
+              "num_triples_checked": 300,
+              "points_per_triple": 13,
+              "num_points": 3900,
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "triples_violated_fraction": 0.0,
+              "max_margin": -5.105936521829961e-06,
+              "boundary_max_margin": -5.105936521829961e-06
+            }
+          },
+          "condition2": {
+            "required_intervals": [
+              [
+                0.0006550488594401979,
+                39.14198172275486
+              ],
+              [
+                39.24125,
+                160.0
+              ]
+            ],
+            "required_measure": 159.9000766738954,
+            "covered_fraction": 1.0,
+            "uncovered_measure": 0.0,
+            "largest_gaps": [],
+            "covered_fraction_including_band": 0.9996837491772762,
+            "support_energy_range": [
+              0.0,
+              162.3677867593885
+            ]
+          },
+          "condition3": {
+            "libration": {
+              "required_intervals": [
+                [
+                  0.0006550488594401979,
+                  39.14198172275486
+                ]
+              ],
+              "required_measure": 39.14132667389542,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 2174
+            },
+            "rotation_ccw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 22705
+            },
+            "rotation_cw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 22705
+            }
+          },
+          "lemma1": {
+            "v_upper_bound_LH_Cf": 866.1822757775993,
+            "T_eps_lower_bound": 1.1544914136026025e-06,
+            "v_eps_hat": 0.001283351978403989,
+            "v_eps_median": 0.08216205148794829,
+            "v_eps_max": 43.69429618949548,
+            "num_rate_samples": 47205,
+            "rates_below_bound": true,
+            "min_hitting_time": 0.0022786349334032036,
+            "hitting_times_above_bound": true,
+            "v0_below_v_eps_hat": true
+          },
+          "theorem2": {
+            "executions_bound": 5263982376,
+            "condition1_holds": true,
+            "condition2_holds": true,
+            "condition3_holds": true,
+            "conditions_hold": true
+          },
+          "theorem3": {
+            "H1": 0.0,
+            "H2": 162.3677867593885,
+            "N": 47584,
+            "applicable": false,
+            "reason": "H is not strongly convex on X (Assumption 7 fails)"
+          },
+          "theorem4": {
+            "T1": 7.124761326708491,
+            "T1_censored": false,
+            "T2": null,
+            "tau_min": 2.294056882968576e-05,
+            "applicable": true,
+            "reason": null,
+            "T_bar_bound": 476205014779.20135,
+            "T_bar_bound_eq13": 37504738808.625114,
+            "T_max_bound": null
+          }
+        },
+        "timing": {
+          "rollout_s": 15.702717853999957,
+          "theory_s": 2.2448719659998915
+        }
+      },
+      "bc": {
+        "seeds": [
+          {
+            "seed": 0,
+            "num_trajectories": 500,
+            "success_rate": 0.062,
+            "mean_reach_time": 140.99235713020462,
+            "std_reach_time": 35.04787211390887,
+            "mean_reach_time_successful": 4.715437583945554,
+            "timing": {
+              "train_s": 0.6070127510001839,
+              "rollout_s": 19.704768563000016
+            }
+          },
+          {
+            "seed": 1,
+            "num_trajectories": 500,
+            "success_rate": 0.038,
+            "mean_reach_time": 144.40744637810417,
+            "std_reach_time": 28.139311497673962,
+            "mean_reach_time_successful": 2.827536265898527,
+            "timing": {
+              "train_s": 0.5278153119998024,
+              "rollout_s": 19.965941201000078
+            }
+          },
+          {
+            "seed": 2,
+            "num_trajectories": 500,
+            "success_rate": 0.152,
+            "mean_reach_time": 127.88566219044407,
+            "std_reach_time": 52.237548923782605,
+            "mean_reach_time_successful": 4.510935463447867,
+            "timing": {
+              "train_s": 0.5889879820001624,
+              "rollout_s": 18.84276917400007
+            }
+          },
+          {
+            "seed": 3,
+            "num_trajectories": 500,
+            "success_rate": 0.018,
+            "mean_reach_time": 147.347840245732,
+            "std_reach_time": 19.589735013924,
+            "mean_reach_time_successful": 2.6577914295540292,
+            "timing": {
+              "train_s": 0.5562305989999459,
+              "rollout_s": 20.127310098999942
+            }
+          },
+          {
+            "seed": 4,
+            "num_trajectories": 500,
+            "success_rate": 0.23,
+            "mean_reach_time": 116.4556052131041,
+            "std_reach_time": 61.37992355195202,
+            "mean_reach_time_successful": 4.154805274365685,
+            "timing": {
+              "train_s": 0.528063555000017,
+              "rollout_s": 18.015537519999953
+            }
+          }
+        ],
+        "mean_over_seeds": {
+          "success_rate": 0.1,
+          "success_rate_std": 0.07951855129465074,
+          "mean_reach_time": 135.4177822315178,
+          "mean_reach_time_std": 11.5802696046578
+        },
+        "pooled": {
+          "num_trajectories": 2500,
+          "success_rate": 0.1,
+          "mean_reach_time": 135.41778223151778,
+          "std_reach_time": 43.75088950543214,
+          "mean_reach_time_successful": 4.177822315177847
+        },
+        "num_samples": 636,
+        "sample_grid": "control"
+      }
+    },
+    {
+      "M": 5,
+      "chain": {
+        "num_trajectories": 500,
+        "success_rate": 1.0,
+        "mean_reach_time": 4.2949439041735245,
+        "std_reach_time": 1.680358852550012,
+        "mean_reach_time_successful": 4.2949439041735245,
+        "num_assignments": 48717,
+        "assignments_per_demo": [
+          1041,
+          22705,
+          22705,
+          1133,
+          1133
+        ],
+        "rollout_extras": {
+          "n_snippets": {
+            "mean": 34.432,
+            "max": 54.0,
+            "sum": 17216.0
+          },
+          "exec_time": {
+            "mean": 1.9957955133017868,
+            "max": 3.183980701738676,
+            "sum": 997.8977566508934
+          },
+          "idle_time": {
+            "mean": 2.2991483908717454,
+            "max": 11.643194896819091,
+            "sum": 1149.5741954358728
+          },
+          "max_idle_interval": {
+            "mean": 1.4669644816560123,
+            "max": 7.124761326708491,
+            "sum": 733.4822408280062
+          },
+          "fallback_entries": {
+            "mean": 0.002,
+            "max": 1.0,
+            "sum": 1.0
+          },
+          "open_idle_interval": {
+            "mean": 0.0,
+            "max": 0.0,
+            "sum": 0.0
+          },
+          "final_energy": {
+            "mean": 39.233749880039205,
+            "max": 39.240354360929146,
+            "sum": 19616.874940019603
+          }
+        },
+        "T1_empirical": 7.124761326708491,
+        "T1_censored": false,
+        "theory": {
+          "N": 48717,
+          "per_demo": {
+            "0": 1041,
+            "1": 22705,
+            "2": 22705,
+            "3": 1133,
+            "4": 1133
+          },
+          "constants": {
+            "L_H": 21.37796242137911,
+            "L": 19.62,
+            "H_X": 163.99428974763524,
+            "C_f": 40.517531966066635,
+            "D_X": 71.72327613249826,
+            "mu_H": null,
+            "v0": 0.001,
+            "eps": 0.001,
+            "H_bar": 160.0,
+            "H_min": 39.14198172275486,
+            "H_max": 39.24125,
+            "c": 120.75875,
+            "lipschitz_mode": "global"
+          },
+          "radii": {
+            "min": 8.258282937644979e-09,
+            "max": 0.11114902132454481,
+            "mean": 0.0020663741643252155,
+            "median": 7.405357832147212e-05
+          },
+          "durations": {
+            "min": 2.294056882247375e-05,
+            "max": 0.785,
+            "mean": 0.12155652787396481,
+            "median": 0.05829629565693267
+          },
+          "tau_min": 2.294056882247375e-05,
+          "condition1": {
+            "algebraic": {
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "max_residual": 1.4210854715202004e-14
+            },
+            "empirical": {
+              "num_triples_checked": 300,
+              "points_per_triple": 13,
+              "num_points": 3900,
+              "num_violations": 0,
+              "violation_fraction": 0.0,
+              "triples_violated_fraction": 0.0,
+              "max_margin": -7.907441278035736e-06,
+              "boundary_max_margin": -7.907441278035736e-06
+            }
+          },
+          "condition2": {
+            "required_intervals": [
+              [
+                0.0006550488594401979,
+                39.14198172275486
+              ],
+              [
+                39.24125,
+                160.0
+              ]
+            ],
+            "required_measure": 159.9000766738954,
+            "covered_fraction": 1.0,
+            "uncovered_measure": 0.0,
+            "largest_gaps": [],
+            "covered_fraction_including_band": 0.9996837491772765,
+            "support_energy_range": [
+              0.0,
+              162.3677867593885
+            ]
+          },
+          "condition3": {
+            "libration": {
+              "required_intervals": [
+                [
+                  0.0006550488594401979,
+                  39.14198172275486
+                ]
+              ],
+              "required_measure": 39.14132667389542,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 3307
+            },
+            "rotation_ccw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 22705
+            },
+            "rotation_cw": {
+              "required_intervals": [
+                [
+                  39.24125,
+                  160.0
+                ]
+              ],
+              "required_measure": 120.75874999999999,
+              "covered_fraction": 1.0,
+              "uncovered_measure": 0.0,
+              "largest_gaps": [],
+              "num_balls": 22705
+            }
+          },
+          "lemma1": {
+            "v_upper_bound_LH_Cf": 866.1822757775993,
+            "T_eps_lower_bound": 1.1544914136026025e-06,
+            "v_eps_hat": 0.001283351978403989,
+            "v_eps_median": 0.08927647352301962,
+            "v_eps_max": 43.69429618949548,
+            "num_rate_samples": 48007,
+            "rates_below_bound": true,
+            "min_hitting_time": 0.0022786349334032036,
+            "hitting_times_above_bound": true,
+            "v0_below_v_eps_hat": true
+          },
+          "theorem2": {
+            "executions_bound": 5263982378,
+            "condition1_holds": true,
+            "condition2_holds": true,
+            "condition3_holds": true,
+            "conditions_hold": true
+          },
+          "theorem3": {
+            "H1": 0.0,
+            "H2": 162.3677867593885,
+            "N": 48717,
+            "applicable": false,
+            "reason": "H is not strongly convex on X (Assumption 7 fails)"
+          },
+          "theorem4": {
+            "T1": 7.124761326708491,
+            "T1_censored": false,
+            "T2": null,
+            "tau_min": 2.294056882247375e-05,
+            "applicable": true,
+            "reason": null,
+            "T_bar_bound": 476205014928.90936,
+            "T_bar_bound_eq13": 37504738822.87463,
+            "T_max_bound": null
+          }
+        },
+        "timing": {
+          "rollout_s": 15.609450353000057,
+          "theory_s": 2.2542715280001175
+        }
+      },
+      "bc": {
+        "seeds": [
+          {
+            "seed": 0,
+            "num_trajectories": 500,
+            "success_rate": 0.294,
+            "mean_reach_time": 107.43812563556389,
+            "std_reach_time": 65.96608894968878,
+            "mean_reach_time_successful": 5.231719848856737,
+            "timing": {
+              "train_s": 0.6467007710000416,
+              "rollout_s": 17.537052953000057
+            }
+          },
+          {
+            "seed": 1,
+            "num_trajectories": 500,
+            "success_rate": 1.0,
+            "mean_reach_time": 7.960271501213312,
+            "std_reach_time": 3.5777737964087817,
+            "mean_reach_time_successful": 7.960271501213312,
+            "timing": {
+              "train_s": 0.6509763639999164,
+              "rollout_s": 2.5820008040000175
+            }
+          },
+          {
+            "seed": 2,
+            "num_trajectories": 500,
+            "success_rate": 0.398,
+            "mean_reach_time": 92.61607709698403,
+            "std_reach_time": 70.60786972178919,
+            "mean_reach_time_successful": 5.81928918840206,
+            "timing": {
+              "train_s": 0.6367942559998028,
+              "rollout_s": 16.995275893000098
+            }
+          },
+          {
+            "seed": 3,
+            "num_trajectories": 500,
+            "success_rate": 1.0,
+            "mean_reach_time": 9.125882099425787,
+            "std_reach_time": 3.601817019288073,
+            "mean_reach_time_successful": 9.125882099425787,
+            "timing": {
+              "train_s": 0.7327885450001759,
+              "rollout_s": 2.830190200999823
+            }
+          },
+          {
+            "seed": 4,
+            "num_trajectories": 500,
+            "success_rate": 0.334,
+            "mean_reach_time": 101.33481093616732,
+            "std_reach_time": 68.72609891416919,
+            "mean_reach_time_successful": 4.295841126249429,
+            "timing": {
+              "train_s": 0.662985911000078,
+              "rollout_s": 17.69495574099983
+            }
+          }
+        ],
+        "mean_over_seeds": {
+          "success_rate": 0.6052000000000001,
+          "success_rate_std": 0.324055797664538,
+          "mean_reach_time": 63.69503345387086,
+          "mean_reach_time_std": 45.27867864106346
+        },
+        "pooled": {
+          "num_trajectories": 2500,
+          "success_rate": 0.6052,
+          "mean_reach_time": 63.69503345387087,
+          "std_reach_time": 69.76652503673915,
+          "mean_reach_time_successful": 7.394305112146169
+        },
+        "num_samples": 698,
+        "sample_grid": "control"
+      }
+    }
+  ],
+  "paper_reference": {
+    "figure": "Fig. 3",
+    "horizon": 150.0,
+    "num_demos": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "chain": {
+      "success_rate": {
+        "values": [
+          0.348,
+          0.678,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "exact": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      "mean_reach_time": {
+        "values": [
+          114.71,
+          68.0,
+          22.0,
+          18.0,
+          13.16
+        ],
+        "exact": [
+          true,
+          false,
+          false,
+          false,
+          true
+        ]
+      },
+      "std_reach_time": {
+        "values": [
+          40.0,
+          53.0,
+          5.5,
+          8.0,
+          7.5
+        ],
+        "exact": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      }
+    },
+    "bc": {
+      "success_rate": {
+        "values": [
+          0.008,
+          0.53,
+          0.418,
+          0.65,
+          0.744
+        ],
+        "exact": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      "mean_reach_time": {
+        "values": [
+          149.0,
+          78.0,
+          90.0,
+          61.5,
+          47.5
+        ],
+        "exact": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "std_reach_time": {
+        "values": [
+          12.5,
+          61.0,
+          65.0,
+          45.5,
+          40.5
+        ],
+        "exact": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      }
+    }
+  },
+  "timing": {
+    "demonstrations_s": 92.38708950900002,
+    "assignment_set_s": 190.185079137,
+    "total_s": 886.251301215
+  }
+}
