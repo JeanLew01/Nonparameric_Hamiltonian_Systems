@@ -2,8 +2,9 @@
 
 * :func:`plot_results` -- the layout of the paper's Figs. 2-3: (a) success rate,
   (b) average reach time (unsuccessful runs count as the horizon) with one
-  standard deviation error bars, x = number of trajectories, Chain Policy
-  (#1f77b4) vs Vanilla BC (#ff7f0e).
+  standard deviation error bars, x = number of trajectories; bars from left to
+  right: Vanilla BC, Diffusion Policy, Chain Policy (PPO, which uses no
+  demonstrations, is reported in the tables only).
 * :func:`plot_assignment_set` -- phase portrait with the demonstrations, the
   support balls B_{r_i}(x_i) of K drawn to scale in data coordinates, the
   target S_tgt and a few zero-input energy levels; the second panel zooms on
@@ -20,10 +21,14 @@ from pathlib import Path
 
 import numpy as np
 
-from symplectic_ncp.experiments.paper_reference import METHOD_LABELS, METHODS, reference_value
+from symplectic_ncp.experiments.paper_reference import METHODS as PAPER_METHODS
+from symplectic_ncp.experiments.paper_reference import reference_value
 from symplectic_ncp.experiments.pipeline import ASSIGNMENTS_FILE, DEMOS_FILE, RESULTS_FILE, load_results, system_dir
 
-COLORS = {"chain": "#1f77b4", "bc": "#ff7f0e"}
+METHODS = ("chain", "bc", "dp", "ppo")  # tables
+FIGURE_METHODS = ("bc", "dp", "chain")  # bar order in the figures (left to right); PPO is reported in tables only
+METHOD_LABELS = {"chain": "Chain Policy", "bc": "Vanilla BC", "dp": "Diffusion Policy", "ppo": "PPO (no demos)"}
+COLORS = {"chain": "#1f77b4", "bc": "#ff7f0e", "dp": "#2ca02c", "ppo": "#9467bd"}
 SYSTEM_TITLES = {"spring_mass": "Spring-mass", "single_pendulum": "Single pendulum"}
 FIGURE_FORMATS = ("png", "pdf")
 
@@ -48,16 +53,40 @@ def _save(fig, fig_dir: Path, stem: str) -> list[Path]:
 
 
 # --------------------------------------------------------------- data access
-def method_summary(entry: dict, method: str) -> dict:
-    """Summary used in figures/tables: chain rollout, or BC pooled over its seeds."""
-    return entry["chain"] if method == "chain" else entry["bc"]["pooled"]
+def method_summary(entry: dict, method: str, results: dict | None = None) -> dict:
+    """Summary used in figures/tables: the chain rollout, or a learned method pooled over its seeds.
+
+    PPO uses no demonstrations, so its (single) summary is repeated for every M.
+    """
+    if method == "chain":
+        return entry.get("chain") or {}
+    if method == "ppo":
+        return ((results or {}).get("ppo") or {}).get("pooled") or {}
+    return (entry.get(method) or {}).get("pooled") or {}
+
+
+def available_methods(results: dict) -> list[str]:
+    present = [m for m in METHODS if m != "ppo" and any(e.get(m) for e in results["per_M"])]
+    return present + (["ppo"] if results.get("ppo") else [])
 
 
 def series(results: dict, method: str, quantity: str) -> tuple[np.ndarray, np.ndarray]:
     """(M values, quantity) over ``results['per_M']``; missing values are NaN."""
     Ms = np.asarray([e["M"] for e in results["per_M"]], dtype=int)
-    vals = [method_summary(e, method).get(quantity) for e in results["per_M"]]
+    vals = [method_summary(e, method, results).get(quantity) for e in results["per_M"]]
     return Ms, np.asarray([np.nan if v is None else v for v in vals], dtype=float)
+
+
+def training_times(results: dict, method: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """(M values, mean, std) of the wall-clock training time; PPO is repeated for every M."""
+    Ms = np.asarray([e["M"] for e in results["per_M"]], dtype=int)
+    if method == "chain":
+        mean = [(e.get("chain") or {}).get("train_seconds") for e in results["per_M"]]
+        return Ms, np.asarray([np.nan if v is None else v for v in mean], dtype=float), np.zeros(len(Ms))
+    blocks = [results.get("ppo")] * len(Ms) if method == "ppo" else [e.get(method) for e in results["per_M"]]
+    mean = [b["mean_over_seeds"]["train_seconds"] if b else np.nan for b in blocks]
+    std = [b["mean_over_seeds"]["train_seconds_std"] if b else np.nan for b in blocks]
+    return Ms, np.asarray(mean, dtype=float), np.asarray(std, dtype=float)
 
 
 # ---------------------------------------------------------- Figs. 2-3 layout
@@ -65,19 +94,20 @@ def plot_results(results: dict, fig_dir, show_paper: bool = False) -> list[Path]
     """Two-panel figure of Section IV; optionally overlays the paper's numbers as black markers."""
     plt = _pyplot()
     name = results["system"]
-    width = 0.35
+    methods = [m for m in FIGURE_METHODS if m in available_methods(results)]
+    width = 0.8 / len(methods)
     with plt.rc_context({"font.family": "serif", "axes.axisbelow": True}):
-        fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.0))
+        fig, axes = plt.subplots(1, 2, figsize=(8.4, 3.2))
         panels = [("success_rate", None, "Success Rate", "(a) Success rate"),
                   ("mean_reach_time", "std_reach_time", "Average Reach Time", "(b) Average reach time")]
         for ax, (quantity, err_q, ylabel, caption) in zip(axes, panels):
-            for k, method in enumerate(METHODS):
+            for k, method in enumerate(methods):
                 Ms, vals = series(results, method, quantity)
                 err = series(results, method, err_q)[1] if err_q else None
-                offset = (k - 0.5) * width
+                offset = (k - (len(methods) - 1) / 2) * width
                 ax.bar(Ms + offset, vals, width, color=COLORS[method], label=METHOD_LABELS[method],
-                       yerr=err, capsize=3, error_kw={"elinewidth": 0.9, "ecolor": "black"})
-                if show_paper:
+                       yerr=err, capsize=2, error_kw={"elinewidth": 0.8, "ecolor": "black"})
+                if show_paper and method in PAPER_METHODS:
                     ref = [reference_value(name, method, quantity, int(M)) for M in Ms]
                     pts = [(M + offset, r[0]) for M, r in zip(Ms, ref) if r is not None]
                     if pts:
@@ -90,10 +120,43 @@ def plot_results(results: dict, fig_dir, show_paper: bool = False) -> list[Path]
             ax.set_title(caption, y=-0.42, fontsize=10)
         axes[0].set_ylim(0.0, 1.05)
         axes[1].set_ylim(bottom=0.0)
-        axes[1].legend(loc="upper right")
-        fig.suptitle(f"{SYSTEM_TITLES.get(name, name)} results", fontsize=11)
+        handles, labels = axes[0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc="upper center", ncol=len(methods), bbox_to_anchor=(0.5, 1.0),
+                   frameon=False, fontsize=9)
+        fig.suptitle(f"{SYSTEM_TITLES.get(name, name)} results", fontsize=11, y=1.08)
         fig.tight_layout()
         paths = _save(fig, Path(fig_dir), f"{name}_results")
+        plt.close(fig)
+    return paths
+
+
+def plot_training_time(results_by_system: dict[str, dict], fig_dir) -> list[Path]:
+    """Wall-clock training time per method and M (log scale) of the demonstration-based methods."""
+    plt = _pyplot()
+    names = list(results_by_system)
+    with plt.rc_context({"font.family": "serif", "axes.axisbelow": True}):
+        fig, axes = plt.subplots(1, len(names), figsize=(4.4 * len(names), 3.2), squeeze=False)
+        for ax, name in zip(axes[0], names):
+            res = results_by_system[name]
+            methods = [m for m in FIGURE_METHODS if m in available_methods(res)]
+            width = 0.8 / max(len(methods), 1)
+            for k, method in enumerate(methods):
+                Ms, mean, std = training_times(res, method)
+                offset = (k - (len(methods) - 1) / 2) * width
+                ax.bar(Ms + offset, mean, width, color=COLORS[method], label=METHOD_LABELS[method],
+                       yerr=std if np.any(std > 0) else None, capsize=2,
+                       error_kw={"elinewidth": 0.8, "ecolor": "black"})
+            ax.set_yscale("log")
+            ax.set_xticks(Ms)
+            ax.set_xlabel("Number of Trajectories")
+            ax.set_ylabel("Training time [s]")
+            ax.set_title(SYSTEM_TITLES.get(name, name), fontsize=10)
+            ax.grid(axis="y", which="both", alpha=0.4)
+        handles, labels = axes[0, 0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc="upper center", ncol=len(labels), bbox_to_anchor=(0.5, 1.06),
+                   frameon=False, fontsize=9)
+        fig.tight_layout()
+        paths = _save(fig, Path(fig_dir), "training_time")
         plt.close(fig)
     return paths
 
@@ -220,51 +283,79 @@ def _ref(system: str, method: str, quantity: str, M: int, digits: int = 3) -> st
 
 
 def summary_markdown(results_by_system: dict[str, dict]) -> str:
-    """Markdown tables: reproduction vs paper (``~`` marks values read off the paper's figures)."""
-    lines = ["# Reproduction vs paper (Section IV)", ""]
-    lines.append("Reach times in seconds, unsuccessful runs count as the horizon; mean +- std over the "
-                 "test states (BC: pooled over seeds).  `~` = read off the paper's figure (approximate).  "
-                 "Theorem 2 diagnostics for K_M: C1 viol. = sampled violation fraction of the local energy "
+    """Markdown tables of every method, the Theorem 2 diagnostics and the training times."""
+    lines = ["# Results (Section IV + ablations)", ""]
+    lines.append("Success rate / average reach time in seconds (unsuccessful runs count as the horizon; mean over "
+                 "the test states, learned methods pooled over their seeds).  Paper values in parentheses "
+                 "(`~` = read off the paper's figure).  PPO uses no demonstrations, so its numbers do not depend "
+                 "on M.  Theorem 2 diagnostics for K_M: C1 viol. = sampled violation fraction of the local energy "
                  "decrease (Condition 1); C2 cov. = covered fraction of {E : Delta H(E) <= c} (Condition 2, "
-                 "target band included); C3 cov. = smallest per-ergodic-component coverage (Condition 3), "
-                 "with the component that attains it.")
+                 "target band included); C3 cov. = smallest per-ergodic-component coverage (Condition 3).")
     for name, res in results_by_system.items():
-        lip = res.get("lipschitz", {})
         cfg = res.get("config", {})
+        methods = available_methods(res)
         lines += [
             "",
             f"## {SYSTEM_TITLES.get(name, name)}",
             "",
-            f"{res['num_initial_states']} initial states with H <= {cfg.get('H_bar')}, horizon {cfg.get('horizon')} s, "
-            f"BC seeds {cfg.get('bc', {}).get('seeds')}; L_H = {_fmt(lip.get('L_H'), 4)}, L = {_fmt(lip.get('L'), 4)} "
-            f"on H <= {_fmt(lip.get('H_X'), 4)}; |K| = {res['assignment_set']['N']}.",
+            f"{res['num_initial_states']} initial states with H <= {cfg.get('H_bar')}, horizon {cfg.get('horizon')} s; "
+            f"seeds: BC {cfg.get('bc', {}).get('seeds')}, DP {cfg.get('dp_seeds')}, PPO {cfg.get('ppo_seeds')}.",
             "",
-            "| M | N(K_M) | Chain success | (paper) | Chain time | (paper) | BC success | (paper) | BC time | (paper) "
-            "| C1 viol. | C2 cov. | C3 cov. |",
-            "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+            "| M | N(K_M) | " + " | ".join(METHOD_LABELS[m] for m in methods) + " | C1 viol. | C2 cov. | C3 cov. |",
+            "|---|---|" + "---|" * len(methods) + "---|---|---|",
         ]
         for e in res["per_M"]:
             M = int(e["M"])
-            row = [str(M), str(e["chain"].get("num_assignments", "-"))]
-            theory = e["chain"].get("theory") or {}
+            chain = e.get("chain") or {}
+            row = [str(M), str(chain.get("num_assignments", "-"))]
+            for method in methods:
+                sm = method_summary(e, method, res)
+                cell = f"{_fmt(sm.get('success_rate'))} / {_fmt(sm.get('mean_reach_time'))}"
+                if method in PAPER_METHODS:
+                    cell += f" ({_ref(name, method, 'success_rate', M)} / {_ref(name, method, 'mean_reach_time', M)})"
+                row.append(cell)
+            theory = chain.get("theory") or {}
             cond1 = (theory.get("condition1") or {}).get("empirical") or {}
             cond2 = theory.get("condition2") or {}
             cond3 = {k: v for k, v in (theory.get("condition3") or {}).items()
                      if isinstance(v, dict) and v.get("covered_fraction") is not None}
             worst = min(cond3, key=lambda k: cond3[k]["covered_fraction"]) if cond3 else None
             c3 = f"{_fmt(cond3[worst]['covered_fraction'], 4)} ({worst})" if worst else "-"
-            checks = [_fmt(cond1.get("violation_fraction")),
-                      _fmt(cond2.get("covered_fraction_including_band"), 4), c3]
-            for method in METHODS:
-                s = method_summary(e, method)
-                row += [
-                    _fmt(s.get("success_rate")),
-                    _ref(name, method, "success_rate", M),
-                    f"{_fmt(s.get('mean_reach_time'))} +- {_fmt(s.get('std_reach_time'))}",
-                    f"{_ref(name, method, 'mean_reach_time', M)} +- {_ref(name, method, 'std_reach_time', M)}",
-                ]
-            lines.append("| " + " | ".join(row + checks) + " |")
+            row += [_fmt(cond1.get("violation_fraction")), _fmt(cond2.get("covered_fraction_including_band"), 4), c3]
+            lines.append("| " + " | ".join(row) + " |")
+    lines += ["", training_time_markdown(results_by_system)]
     return "\n".join(lines) + "\n"
+
+
+def training_time_markdown(results_by_system: dict[str, dict]) -> str:
+    """Training-time table (seconds, mean +- std over seeds; chain policy: Algorithm 1, deterministic)."""
+    lines = ["## Training time [s]", "",
+             "Wall-clock time of the training call on the same machine (chain policy: Lipschitz constants + "
+             "Algorithm 1 on the first M demonstrations, CPU, one process per demonstration; BC: CPU; "
+             "diffusion policy and PPO: as reported in the device column).  Demonstration generation (shared "
+             "by chain, BC and DP) is excluded; PPO uses no demonstrations.", ""]
+    for name, res in results_by_system.items():
+        methods = available_methods(res)
+        Ms = [int(e["M"]) for e in res["per_M"]]
+        lines += [f"**{SYSTEM_TITLES.get(name, name)}**", "",
+                  "| Method | device | " + " | ".join(f"M={M}" for M in Ms) + " |",
+                  "|---|---|" + "---|" * len(Ms)]
+        for method in methods:
+            _, mean, std = training_times(res, method)
+            if method == "chain":
+                device = "cpu"
+            elif method == "ppo":
+                device = res["ppo"]["seeds"][0].get("device", "-")
+            else:
+                device = next(((e.get(method) or {}).get("seeds", [{}])[0].get("device", "-")
+                               for e in res["per_M"] if e.get(method)), "-")
+            cells = [_fmt(m, 3) if sd == 0 or not np.isfinite(sd) else f"{_fmt(m, 3)} ± {_fmt(sd, 2)}"
+                     for m, sd in zip(mean, std)]
+            if method == "ppo":
+                cells = [cells[0]] + ["(same)"] * (len(cells) - 1)
+            lines.append(f"| {METHOD_LABELS[method]} | {device} | " + " | ".join(cells) + " |")
+        lines.append("")
+    return "\n".join(lines)
 
 
 def write_summary(out_dir, results_by_system: dict[str, dict]) -> Path:
@@ -286,6 +377,9 @@ def make_all_figures(out_dir, systems=None, show_paper: bool = False, assignment
         paths += plot_results(load_results(out_dir, name), fig_dir, show_paper=show_paper)
         if assignment_figure:
             paths += plot_assignment_set(out_dir, name, fig_dir)
+    names = available_systems(out_dir)
+    if names:
+        paths += plot_training_time({n: load_results(out_dir, n) for n in names}, fig_dir)
     return paths
 
 

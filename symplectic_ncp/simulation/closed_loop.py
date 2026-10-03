@@ -297,6 +297,14 @@ def simulate_feedback_policy(
     ``u = policy_fn(X)`` is recomputed every ``control_period`` and held
     (ZOH), clipped to the input bounds; target entry is detected on the
     continuous trajectory of every ``dt`` step, exactly as for the chain policy.
+
+    Action chunks (e.g. diffusion policy): if ``policy_fn`` returns a 3-D
+    array (B, Ta, m), chunk element j is held during the j-th control period
+    after the query and the trajectory queries again after Ta periods.  The
+    chunk position is tracked per trajectory, so each call receives only the
+    running trajectories whose chunk is exhausted.  A 2-D output (B, m) is a
+    chunk of length one: it is queried on all running trajectories every
+    control period (the original behavior).
     ``extras["final_energy"]`` holds H at the end of each episode.
     ``record=True`` also returns ``trace`` (per trajectory: ``t``, ``x``, ``u``
     with u applied on (t[j-1], t[j]], as in :func:`simulate_chain_policy`).
@@ -310,6 +318,9 @@ def simulate_feedback_policy(
     success = target.contains(X)
     reach_time = np.where(success, 0.0, np.inf)
     U = np.zeros((B, m))
+    chunk = np.zeros((B, 1, m))  # current (clipped) action chunk of every trajectory
+    pos = np.zeros(B, dtype=int)  # index of the next chunk element to apply
+    length = np.zeros(B, dtype=int)  # chunk length (0: query at the next control instant)
     num_steps = int(np.ceil(horizon / dt - _TIME_TOL))
     trace = [[(0.0, X[b].copy(), np.zeros(m))] for b in range(B)] if record else None
     for step in range(num_steps):
@@ -319,7 +330,24 @@ def simulate_feedback_policy(
         t0 = step * dt
         h = np.full(run.size, min(dt, horizon - t0))
         if step % ratio == 0:
-            U[run] = system.clip_control(np.asarray(policy_fn(X[run]), dtype=float).reshape(run.size, m))
+            need = run[pos[run] >= length[run]]
+            if need.size:
+                out = np.asarray(policy_fn(X[need]), dtype=float)
+                if out.ndim == 3:
+                    if out.shape[0] != need.size or out.shape[2] != m or out.shape[1] < 1:
+                        raise ValueError(f"action chunk must have shape ({need.size}, Ta, {m}), got {out.shape}")
+                    L = out.shape[1]
+                    out = system.clip_control(out.reshape(-1, m)).reshape(need.size, L, m)
+                else:
+                    L = 1
+                    out = system.clip_control(out.reshape(need.size, m))[:, None, :]
+                if chunk.shape[1] < L:
+                    chunk = np.concatenate([chunk, np.zeros((B, L - chunk.shape[1], m))], axis=1)
+                chunk[need, :L] = out
+                length[need] = L
+                pos[need] = 0
+            U[run] = chunk[run, pos[run]]
+            pos[run] += 1
         xa, Ur = X[run], U[run]
         xb, arc = flow.arc(xa, Ur, h)
         s_tgt = target_entry(system, target, arc, num_chords)

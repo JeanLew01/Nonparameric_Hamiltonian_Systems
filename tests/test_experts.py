@@ -134,5 +134,9 @@ def test_saved_demonstrations_are_valid(name):
                 rotating = system.hamiltonian(demo.states) > system.separatrix_energy
                 assert np.all(np.sign(p[rotating]) == np.sign(p[0]))
                 assert np.all(np.sign(p) == np.sign(p[0]))
-        rest = demos[0]
+        rest = next(d for d in demos if d.name == "libration_rest")
         assert np.array_equal(rest.states[0], np.zeros(2))
+        # libration demonstrations stay below the separatrix (NMPC energy cap)
+        for demo in demos:
+            if demo.name.startswith("libration"):
+                assert system.hamiltonian(demo.states).max() <= system.separatrix_energy + 1e-3

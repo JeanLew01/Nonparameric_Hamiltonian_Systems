@@ -12,7 +12,10 @@ snippet u_{i,t} = u_j restricted to (s, s + t].
 
 from __future__ import annotations
 
+import multiprocessing
+import os
 from collections.abc import Sequence
+from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 
@@ -25,26 +28,32 @@ LIPSCHITZ_MODES = ("global", "local")
 
 
 # --------------------------------------------------------------- constants
-LIPSCHITZ_MARGIN = 1e-2  # X is padded by 1% in energy so the grid supremum over X bounds the region of interest
+LIPSCHITZ_MARGIN = 5e-2  # default energy padding of X (ChainConfig.energy_margin)
 
 
 def lipschitz_for_demos(
-    system: HamiltonianSystem, demos: Sequence[Demonstration], H_bar: float, energy_floor: float = 0.0
+    system: HamiltonianSystem,
+    demos: Sequence[Demonstration],
+    H_bar: float,
+    energy_floor: float = 0.0,
+    margin: float = LIPSCHITZ_MARGIN,
 ) -> tuple[float, float, float]:
     """Constants of Assumptions 1-2 on X = {H <= H_X}.
 
-    H_X = (1 + LIPSCHITZ_MARGIN) max(H_bar, max_j max_t H(phi_j(t)), energy_floor):
+    H_X = (1 + margin) max(H_bar, max_j max_t H(phi_j(t)), energy_floor):
     X must contain S_0 = {H <= H_bar}, every demonstrated state and (via
     ``energy_floor``, see :func:`build_certified_assignment_set`) every
     certified ball, so that the Grönwall and Lipschitz arguments of Theorem 2
     apply.  The margin keeps the grid-based supremum of
     :meth:`HamiltonianSystem.lipschitz_constants` an upper bound on the
-    unpadded set.  Returns ``(L_H, L, H_X)``.
+    unpadded set and usually leaves room for the balls, so that
+    :func:`build_certified_assignment_set` needs a single pass.  Returns
+    ``(L_H, L, H_X)``.
     """
     H_X = max(float(H_bar), float(energy_floor))
     for demo in demos:
         H_X = max(H_X, float(np.max(system.hamiltonian(demo.states))))
-    H_X *= 1.0 + LIPSCHITZ_MARGIN
+    H_X *= 1.0 + margin
     L_H, L = system.lipschitz_constants(H_X)
     return float(L_H), float(L), H_X
 
@@ -205,19 +214,104 @@ def _demo_state(system, demo: Demonstration, s: float) -> np.ndarray:
     return _flow(system, demo.states[k], demo.controls[k], h)
 
 
-def _exit_time(system, x_start, u, h: float, x_i, r_i: float, iters: int = 60) -> float:
-    """Smallest delta in (0, h] with ||phi(delta, x_start, u) - x_i|| = r_i, given that x_start is
-    inside the ball and phi(h, x_start, u) is not (bisection on the exact one-step flow)."""
-    lo, hi = 0.0, h
+def _exit_time(system, x_start, u, h: float, x_i, r_i: float, grid: int = 32, iters: int = 60) -> float:
+    """First delta in (0, h] with ||phi(delta, x_start, u) - x_i|| = r_i (x_start inside the ball).
+
+    The one-step flow is evaluated on ``grid`` points in one batched RK4 call to bracket the
+    first exit, which is then located by the Illinois (modified regula falsi) method on the exact
+    one-step flow.  Returns the upper end of the final bracket (a point on or outside the sphere);
+    if the sampled flow never leaves the ball, returns h.
+    """
+    deltas = h * np.arange(1, grid + 1) / grid
+    X = system.rk4_step(np.repeat(np.asarray(x_start, dtype=float)[None, :], grid, axis=0), u, deltas)
+    gaps = system.distance(X, x_i) - r_i
+    out = np.flatnonzero(gaps >= 0.0)
+    if out.size == 0:
+        return h
+    j = int(out[0])
+    lo, g_lo = (0.0, float(system.distance(x_start, x_i)) - r_i) if j == 0 else (deltas[j - 1], gaps[j - 1])
+    hi, g_hi = deltas[j], gaps[j]
+    side = 0
+    tol = 1e-12 * h
     for _ in range(iters):
-        mid = 0.5 * (lo + hi)
-        if system.distance(_flow(system, x_start, u, mid), x_i) < r_i:
-            lo = mid
-        else:
-            hi = mid
-        if hi - lo <= 1e-12 * h:
+        if hi - lo <= tol or g_hi <= 1e-14 * max(r_i, np.finfo(float).tiny):
             break
+        c = hi - g_hi * (hi - lo) / (g_hi - g_lo)
+        if not lo < c < hi:
+            c = 0.5 * (lo + hi)
+        g_c = float(system.distance(_flow(system, x_start, u, c), x_i)) - r_i
+        if g_c >= 0.0:
+            hi, g_hi = c, g_c
+            if side == +1:
+                g_lo *= 0.5
+            side = +1
+        else:
+            lo, g_lo = c, g_c
+            if side == -1:
+                g_hi *= 0.5
+            side = -1
     return hi
+
+
+def _anchor_states(system, demo: Demonstration, s: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Vectorized anchor geometry: grid index k, fraction theta and state phi(s) for every time in ``s``.
+
+    Same arithmetic as the scalar loop of :func:`_algorithm1_triples` (one partial RK4 step of
+    length theta dt from the preceding grid point), so both paths give identical anchors.
+    """
+    dt, n = demo.dt, demo.num_steps
+    k = np.floor(s / dt + _SNAP).astype(int)
+    theta = s / dt - k
+    theta = np.where((theta < _SNAP) | (k >= n), 0.0, theta)
+    kc = np.minimum(k, n)
+    X = demo.states[kc].copy()
+    rows = np.flatnonzero(theta > 0.0)
+    if rows.size:
+        X[rows] = system.rk4_step(demo.states[kc[rows]], demo.controls[kc[rows]], theta[rows] * dt)
+    return k, theta, X
+
+
+def _demo_states(system, demo: Demonstration, s: np.ndarray) -> np.ndarray:
+    """Vectorized :func:`_demo_state` (identical arithmetic)."""
+    dt, n = demo.dt, demo.num_steps
+    k = np.minimum(np.floor(s / dt + _SNAP).astype(int), n)
+    h = s - k * dt
+    X = demo.states[k].copy()
+    rows = np.flatnonzero((k < n) & (h > _SNAP * dt))
+    if rows.size:
+        X[rows] = system.rk4_step(demo.states[k[rows]], demo.controls[k[rows]], h[rows])
+    return X
+
+
+def _block_argmax(profiler: "_RadiusProfiler", k: np.ndarray, theta: np.ndarray, X: np.ndarray):
+    """Vectorized :meth:`_RadiusProfiler.argmax` for global constants over a block of anchors.
+
+    Returns (m_best, r_best, exact) where ``exact`` marks rows whose maximizer is certainly within
+    the first HEAD durations; the others must be recomputed with the scalar profiler.
+    """
+    dH = profiler.energy_dist
+    n = dH.shape[0] - 1
+    head = profiler.HEAD
+    m = np.arange(1, head + 1)
+    idx = k[:, None] + m[None, :]
+    valid_len = idx <= np.minimum(k + head, n)[:, None]
+    t = (m[None, :] - theta[:, None]) * profiler.dt
+    dHx = profiler.target.energy_distance(X)
+    num = dHx[:, None] - dH[np.minimum(idx, n)] - profiler.v0 * t
+    r = num * _denominator_weight(t, profiler.L_H, profiler.L)
+    r = np.where(valid_len, r, -np.inf)
+    best = np.max(r, axis=1)
+    # rows whose maximizer could lie beyond the first block (same test as the scalar argmax)
+    exact = (k + head >= n)
+    pos = best > 0.0
+    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+        ratio = (dHx + profiler.H_minus) / (max(profiler.L_H, np.finfo(float).tiny) * np.where(pos, best, 1.0))
+        last = np.where(ratio <= 1.0, 0, np.where(ratio > 2.0, np.floor(np.log(ratio - 1.0) / (profiler.L * profiler.dt)) + 2, 2))
+    exact |= pos & np.isfinite(ratio) & (profiler.L > 0.0) & (last <= head)
+    masked = np.where(r > 0.0, r, -np.inf)
+    m_best = np.where(np.any(r > 0.0, axis=1), np.argmax(masked, axis=1) + 1, 0)
+    r_best = np.where(m_best > 0, r[np.arange(len(k)), np.maximum(m_best - 1, 0)], 0.0)
+    return m_best, r_best, exact
 
 
 def _algorithm1_triples(system, target, demo, v0, L_H, L, lipschitz, min_advance: float) -> list[tuple]:
@@ -232,7 +326,8 @@ def _algorithm1_triples(system, target, demo, v0, L_H, L, lipschitz, min_advance
       points with r_i(t) > 0 (ties -> the shortest); if none, stop (line 10);
     * line 14: sigma_i = inf{delta in (0, tau_i] : ||phi(s + delta) - x_i|| = r_i},
       located on the continuous trajectory (first grid point outside the
-      ball, then bisection inside that step), so consecutive balls touch.
+      ball, then the first exit inside that step, see :func:`_exit_time`), so
+      consecutive balls touch.
       sigma_i = tau_i if the trajectory stays in the ball (line 16).
     * The advance is floored at ``min_advance`` (seconds).  Where r_i is
       extremely small (r_i -> 0 is possible, e.g. where Delta H barely
@@ -244,7 +339,12 @@ def _algorithm1_triples(system, target, demo, v0, L_H, L, lipschitz, min_advance
     profiler = _RadiusProfiler(system, target, demo, v0, L_H, L, lipschitz)
     triples = []
     s = 0.0  # anchor time
+    block = 8  # adaptive size of the vectorized block of floor-advanced anchors
     while True:
+        if lipschitz == "global" and min_advance > 0.0:
+            s, block, stop = _floored_block(system, target, demo, profiler, s, min_advance, block, triples)
+            if stop:
+                break
         k = int(np.floor(s / dt + _SNAP))
         theta = s / dt - k
         if theta < _SNAP or k >= n:
@@ -277,6 +377,39 @@ def _algorithm1_triples(system, target, demo, v0, L_H, L, lipschitz, min_advance
             sigma = tau_i  # line 16
         s += min(max(sigma, min_advance), tau_i)  # line 18 (with the Zeno floor)
     return triples
+
+
+def _floored_block(system, target, demo, profiler, s: float, min_advance: float, block: int, triples: list):
+    """Vectorized run of consecutive anchors whose advance is the floor ``min_advance``.
+
+    Candidate anchors s, s + f, s + 2f, ... (accumulated exactly like the scalar loop) are
+    evaluated in one batch; they are accepted in order while every accepted anchor would be
+    floor-advanced by the scalar loop.  Returns (s, next block size, stop) where ``s`` is the
+    first anchor left to the scalar loop and ``stop`` signals a loop termination (lines 6/10).
+    """
+    dt, n = demo.dt, demo.num_steps
+    s_arr = np.add.accumulate(np.concatenate([[s], np.full(block, min_advance)]))  # block + 1 times
+    k, theta, X = _anchor_states(system, demo, s_arr)
+    m_best, r_best, exact = _block_argmax(profiler, np.minimum(k, n - 1), theta, X)
+    inside = target.contains(X)
+    tau = (m_best - theta) * dt
+    nxt = _demo_states(system, demo, s_arr[:-1] + np.minimum(min_advance, np.maximum(tau[:-1], 0.0)))
+    left = system.distance(nxt, X[:-1]) >= r_best[:-1]
+    accepted = 0
+    for j in range(block):
+        if k[j] >= n or inside[j]:
+            return s_arr[j], block, True
+        if not exact[j]:
+            break  # the maximizer may lie in the tail: leave this anchor to the scalar loop
+        if m_best[j] == 0:
+            return s_arr[j], block, True
+        if tau[j] < min_advance or not left[j]:
+            break  # not a plain floor advance: the scalar loop handles this anchor
+        triples.append((X[j].copy(), float(r_best[j]), demo.controls[k[j] : k[j] + m_best[j]].copy(),
+                        (1.0 - theta[j]) * dt, float(s_arr[j])))
+        accepted += 1
+    block = min(2 * block, 512) if accepted == block else max(4, accepted)
+    return s_arr[accepted], block, False
 
 
 def _to_assignment_set(triples: list[tuple], demo_ids: list[int], state_dim: int, dt: float) -> AssignmentSet:
@@ -326,8 +459,9 @@ def build_certified_assignment_set(
     quickly).  Returns ``(K, (L_H, L, H_X))``.
     """
     floor = 0.0
+    margin = getattr(chain_cfg, "energy_margin", LIPSCHITZ_MARGIN)
     for _ in range(max_iter):
-        L_H, L, H_X = lipschitz_for_demos(system, demos, H_bar, floor)
+        L_H, L, H_X = lipschitz_for_demos(system, demos, H_bar, floor, margin)
         K = build_assignment_set(system, target, demos, chain_cfg, L_H, L)
         reach = max_energy_on_balls(system, K.centers, K.radii)
         if reach <= H_X:
@@ -346,19 +480,28 @@ def build_assignment_set(
 ) -> AssignmentSet:
     """Algorithm 1: K = union over demonstrations j (demo_ids = list position) of their triples.
 
-    ``chain_cfg`` provides ``v0``, ``lipschitz`` and ``min_anchor_advance``
-    (:class:`~symplectic_ncp.config.ChainConfig`).
+    ``chain_cfg`` provides ``v0``, ``lipschitz``, ``min_anchor_advance`` and
+    ``workers`` (:class:`~symplectic_ncp.config.ChainConfig`).  Algorithm 1
+    treats every demonstration independently (its outer loop), so with
+    ``workers != 1`` the demonstrations are processed in parallel processes
+    (0 = one per demonstration, up to the CPU count); the result is identical.
     """
     if not demos:
         raise ValueError("no demonstrations given")
     dt = demos[0].dt
     if any(abs(d.dt - dt) > 1e-12 for d in demos):
         raise ValueError("all demonstrations must share the same sampling step")
+    args = (chain_cfg.v0, L_H, L, chain_cfg.lipschitz, chain_cfg.min_anchor_advance)
+    workers = int(getattr(chain_cfg, "workers", 1))
+    workers = min(len(demos), os.cpu_count() or 1) if workers == 0 else min(workers, len(demos))
+    if workers > 1:
+        ctx = multiprocessing.get_context("fork")  # children only run numpy code
+        with ProcessPoolExecutor(max_workers=workers, mp_context=ctx) as pool:
+            parts = list(pool.map(_algorithm1_triples, *zip(*[(system, target, d, *args) for d in demos])))
+    else:
+        parts = [_algorithm1_triples(system, target, d, *args) for d in demos]
     triples, ids = [], []
-    for j, demo in enumerate(demos):
-        part = _algorithm1_triples(
-            system, target, demo, chain_cfg.v0, L_H, L, chain_cfg.lipschitz, chain_cfg.min_anchor_advance
-        )
+    for j, part in enumerate(parts):
         triples += part
         ids += [j] * len(part)
     return _to_assignment_set(triples, ids, system.state_dim, dt)

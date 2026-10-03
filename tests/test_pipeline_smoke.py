@@ -9,6 +9,8 @@ system with tiny settings.
 
 from __future__ import annotations
 
+import dataclasses
+
 import json
 import shutil
 import sys
@@ -111,6 +113,24 @@ def install_fakes(monkeypatch) -> dict:
         record("bc", len(demos), seed)
         return lambda X: np.zeros((np.shape(X)[0], system.control_dim))
 
+    @dataclasses.dataclass
+    class FakeConfig:
+        iterations: int = 1
+
+    def ppo_config(system_name):
+        return FakeConfig()
+
+    def train_ppo(system, target, cfg, ppo_cfg, seed):
+        record("ppo", seed)
+        return (lambda X: np.zeros((np.shape(X)[0], system.control_dim))), {"device": "cpu"}
+
+    def diffusion_policy_config(system_name):
+        return FakeConfig()
+
+    def train_diffusion_policy(system, demos, dp_cfg, seed):
+        record("dp", len(demos), seed)
+        return (lambda X: np.zeros((np.shape(X)[0], system.control_dim))), {"device": "cpu"}
+
     def sample_initial_states(system, cfg):
         return system.sample_energy_sublevel(cfg.num_inits, cfg.H_bar, np.random.default_rng(cfg.init_seed))
 
@@ -124,6 +144,9 @@ def install_fakes(monkeypatch) -> dict:
         "symplectic_ncp.baselines.behavior_cloning": {"train_behavior_cloning": train_behavior_cloning,
                                                       "imitation_dataset": imitation_dataset},
         "symplectic_ncp.evaluation.initial_states": {"sample_initial_states": sample_initial_states},
+        "symplectic_ncp.baselines.ppo": {"ppo_config": ppo_config, "train_ppo": train_ppo},
+        "symplectic_ncp.baselines.diffusion_policy": {"diffusion_policy_config": diffusion_policy_config,
+                                                       "train_diffusion_policy": train_diffusion_policy},
     }
     for mod_name, attrs in fakes.items():
         module = types.ModuleType(mod_name)
@@ -225,7 +248,7 @@ def test_pipeline_real_tiny(tmp_path):
         shutil.copy(saved, sdir / "demonstrations.npz")
     else:
         save_demonstrations(sdir / "demonstrations.npz", synthetic_demos(cfg))
-    results = pipeline.run_system(cfg, tmp_path, verbose=False)
+    results = pipeline.run_system(cfg, tmp_path, verbose=False, methods=("chain", "bc"))  # DP, PPO: own tests
     check_outputs(tmp_path, cfg, results)
     check_reporting(tmp_path, cfg, results)
     assert results["per_M"][0]["chain"]["theory"] is not None

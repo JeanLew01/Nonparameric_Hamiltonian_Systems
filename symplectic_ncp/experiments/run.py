@@ -14,6 +14,7 @@ from dataclasses import replace
 from symplectic_ncp.config import CONFIGS, ExperimentConfig, get_config
 
 QUICK_NUM_INITS = 50
+METHODS = ("chain", "bc", "dp", "ppo")
 
 
 def build_config(system_name: str, args: argparse.Namespace) -> ExperimentConfig:
@@ -26,6 +27,10 @@ def build_config(system_name: str, args: argparse.Namespace) -> ExperimentConfig
         cfg = replace(cfg, bc=replace(cfg.bc, seeds=tuple(int(s) for s in args.bc_seeds)))
     if args.num_demos is not None:
         cfg = replace(cfg, num_demos=tuple(int(m) for m in args.num_demos))
+    if args.dp_seeds is not None:
+        cfg = replace(cfg, dp_seeds=tuple(int(s) for s in args.dp_seeds))
+    if args.ppo_seeds is not None:
+        cfg = replace(cfg, ppo_seeds=tuple(int(s) for s in args.ppo_seeds))
     return cfg
 
 
@@ -38,6 +43,10 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("--force-experts", action="store_true", help="regenerate the NMPC demonstrations")
     parser.add_argument("--bc-seeds", nargs="+", type=int, default=None, help="BC training seeds (default: config)")
     parser.add_argument("--num-demos", nargs="+", type=int, default=None, help="values of M (default: 1 2 3 4 5)")
+    parser.add_argument("--methods", nargs="+", choices=list(METHODS), default=list(METHODS),
+                        help="methods to run (chain, bc: paper; dp, ppo: ablations)")
+    parser.add_argument("--dp-seeds", nargs="+", type=int, default=None, help="diffusion-policy seeds (default: config)")
+    parser.add_argument("--ppo-seeds", nargs="+", type=int, default=None, help="PPO seeds (default: config)")
     parser.add_argument("--no-plots", action="store_true", help="skip the figures")
     parser.add_argument("--show-paper", action="store_true", help="overlay the paper's numbers on the figures")
     parser.add_argument("--quiet", action="store_true")
@@ -45,18 +54,20 @@ def parse_args(argv=None) -> argparse.Namespace:
 
 
 def main(argv=None) -> dict:
-    from symplectic_ncp.experiments.pipeline import load_results, run_system
+    from symplectic_ncp.experiments.pipeline import load_results, run_system, write_all_training_times
     from symplectic_ncp.experiments.plotting import available_systems, make_all_figures, summary_markdown, write_summary
 
     args = parse_args(argv)
     results = {}
     for name in args.systems:
-        results[name] = run_system(build_config(name, args), args.out, args.force_experts, verbose=not args.quiet)
+        results[name] = run_system(build_config(name, args), args.out, args.force_experts, verbose=not args.quiet,
+                                   methods=tuple(args.methods))
     print(summary_markdown(results))
     # summary.md also keeps the systems of earlier runs into the same directory
     combined = {name: load_results(args.out, name) for name in available_systems(args.out)}
     combined.update(results)
     print(f"summary written to {write_summary(args.out, combined)}")
+    print(f"training times written to {write_all_training_times(args.out, list(combined))}")
     if not args.no_plots:
         for path in make_all_figures(args.out, list(results), show_paper=args.show_paper):
             print(f"saved {path}")

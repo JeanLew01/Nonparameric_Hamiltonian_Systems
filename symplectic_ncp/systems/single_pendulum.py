@@ -43,7 +43,10 @@ class SinglePendulum(HamiltonianSystem):
 
     def grad_hamiltonian(self, x):
         X = as_batch(x, 2)
-        return np.stack([self.mgl * np.sin(X[:, 0]), X[:, 1] / self.inertia], axis=1)
+        out = np.empty_like(X)
+        out[:, 0] = self.mgl * np.sin(X[:, 0])
+        out[:, 1] = X[:, 1] / self.inertia
+        return out
 
     def structure_matrices(self):
         J = np.array([[0.0, 1.0], [-1.0, 0.0]])

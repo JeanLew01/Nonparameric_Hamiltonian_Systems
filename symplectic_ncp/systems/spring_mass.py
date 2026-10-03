@@ -27,7 +27,10 @@ class SpringMass(HamiltonianSystem):
 
     def grad_hamiltonian(self, x):
         X = as_batch(x, 2)
-        return np.stack([self.k * X[:, 0], X[:, 1] / self.m], axis=1)
+        out = np.empty_like(X)
+        out[:, 0] = self.k * X[:, 0]
+        out[:, 1] = X[:, 1] / self.m
+        return out
 
     def structure_matrices(self):
         J = np.array([[0.0, 1.0], [-1.0, 0.0]])

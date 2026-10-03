@@ -44,6 +44,8 @@ class ChainConfig:
     lipschitz: str = "global"  # "global": L_H, L of Assumptions 1-2 on X; "local": max along the snippet
     membership_tol: float = 1e-6  # numerical slack on rho_K(x) <= 1
     min_anchor_advance: float = 1e-4  # floor [s] on sigma_i in Algorithm 1 (prevents Zeno anchor sequences)
+    energy_margin: float = 0.05  # X = {H <= (1 + margin) max(H_bar, demo energies)} for L_H, L
+    workers: int = 0  # Algorithm 1 processes in parallel over demonstrations (0 = one per demo)
 
 
 @dataclass
@@ -79,6 +81,8 @@ class ExperimentConfig:
     nmpc: NMPCConfig = field(default_factory=NMPCConfig)
     chain: ChainConfig = field(default_factory=ChainConfig)
     bc: BCConfig = field(default_factory=BCConfig)
+    dp_seeds: tuple[int, ...] = (0, 1, 2)  # diffusion-policy ablation (symplectic_ncp.baselines.diffusion_policy)
+    ppo_seeds: tuple[int, ...] = (0, 1, 2)  # PPO ablation (symplectic_ncp.baselines.ppo)
 
     def expert_fingerprint(self) -> str:
         """JSON string of every setting that determines the expert demonstrations (cache key)."""
@@ -137,15 +141,16 @@ def single_pendulum_config() -> ExperimentConfig:
         target_center=(np.pi, 0.0),
         horizon=150.0,
         H_bar=H_bar,
-        # Ordered so that the first demonstrations visit the three ergodic
-        # components of the pendulum: libration, clockwise and
-        # counter-clockwise rotation; the last two add libration coverage.
-        # Libration demonstrations are kept below the separatrix (energy cap
-        # 2 m g l) so that each demonstration lies in a single component.
+        # Ordered so that the first three demonstrations visit the three
+        # ergodic components of the pendulum one at a time: clockwise
+        # rotation, counter-clockwise rotation, libration; the last two add
+        # libration coverage.  Libration demonstrations are kept below the
+        # separatrix (energy cap 2 m g l) so that each demonstration lies in a
+        # single component.
         experts=(
-            ExpertSpec("libration_rest", (0.0, 0.0), energy_cap=separatrix),
             ExpertSpec("rotation_cw", _pendulum_rotation_state(0.5 * np.pi, H_bar, -1)),
             ExpertSpec("rotation_ccw", _pendulum_rotation_state(-0.5 * np.pi, H_bar, +1)),
+            ExpertSpec("libration_rest", (0.0, 0.0), energy_cap=separatrix),
             ExpertSpec("libration_right", (3.0, 0.0), energy_cap=separatrix),
             ExpertSpec("libration_left", (-3.0, 0.0), energy_cap=separatrix),
         ),

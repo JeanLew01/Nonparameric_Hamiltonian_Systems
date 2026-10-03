@@ -423,3 +423,84 @@ def test_chain_policy_trace_is_consistent_with_the_rollout():
         idle = tr["snippet"][1:] == DEFAULT
         assert np.all(tr["u"][1:][idle] == 0.0)  # zero input outside the snippets
     assert plain.trace is None
+
+
+# ------------------------------------------- feedback executor: action chunks
+def test_feedback_chunk_of_length_one_is_bitwise_identical_to_2d():
+    sys_ = SinglePendulum()
+    target = TargetSet(sys_, np.array([np.pi, 0.0]), 0.1)
+    x0 = sys_.wrap(np.random.default_rng(7).uniform([-np.pi, -20.0], [np.pi, 20.0], size=(40, 2)))
+
+    def law(X):
+        return -3.0 * np.sin(X[:, :1]) - 0.5 * X[:, 1:] + 25.0 * np.cos(X[:, :1])  # saturates sometimes
+
+    a = simulate_feedback_policy(sys_, target, law, x0, 3.0, DT, 0.02, record=True)
+    b = simulate_feedback_policy(sys_, target, lambda X: law(X)[:, None, :], x0, 3.0, DT, 0.02, record=True)
+    assert np.array_equal(a.success, b.success) and np.array_equal(a.reach_time, b.reach_time)
+    assert np.array_equal(a.extras["final_energy"], b.extras["final_energy"])
+    for ta, tb in zip(a.trace, b.trace):
+        assert np.array_equal(ta["u"], tb["u"]) and np.array_equal(ta["x"], tb["x"])
+
+
+def test_feedback_chunk_schedule_clipping_and_queries():
+    sys_ = SpringMass()
+    target = TargetSet(sys_, np.array([50.0, 50.0]), 0.1)  # never reached
+    calls = []
+
+    def policy(X):
+        calls.append(X.shape[0])
+        k = len(calls)
+        # chunk (B, 3, 1): elements 5k + j, the last one far above u_max (clipped to 20).
+        chunk = np.array([5.0 * k, 5.0 * k + 1.0, 1000.0])
+        return np.broadcast_to(chunk[None, :, None], (X.shape[0], 3, 1)).copy()
+
+    x0 = np.array([[1.0, 0.0], [0.0, 1.0]])
+    res = simulate_feedback_policy(sys_, target, policy, x0, horizon=0.2, dt=DT, control_period=0.02, record=True)
+    # 10 control periods, a query every 3 periods: at periods 0, 3, 6, 9.
+    assert calls == [2, 2, 2, 2]
+    per_period = np.array([5.0, 6.0, 20.0, 10.0, 11.0, 20.0, 15.0, 16.0, 20.0, 20.0])
+    expected_u = np.repeat(per_period, 4)
+    for tr in res.trace:
+        np.testing.assert_array_equal(tr["u"][1:, 0], expected_u)
+    x = x0.copy()
+    for u in expected_u:
+        x = sys_.rk4_step(x, np.full((2, 1), u), DT)
+    np.testing.assert_allclose(res.extras["final_energy"], sys_.hamiltonian(x), rtol=1e-12)
+
+
+def test_feedback_chunk_positions_survive_shrinking_running_set():
+    sys_ = SpringMass()
+    # The first trajectory starts next to the target and enters it during its first chunk.
+    target = TargetSet(sys_, np.array([0.0, 0.0]), 0.1)
+    x0 = np.array([[0.0, -0.12], [1.5, 0.0], [0.0, -1.5]])
+    calls = []
+
+    def policy(X):
+        calls.append(X.copy())
+        # Ta = 5 copies of a PD law evaluated at the query state (open loop for 5 periods).
+        u = sys_.clip_control(-2.0 * X[:, :1] - 3.0 * X[:, 1:])
+        return np.repeat(u[:, None, :], 5, axis=1)
+
+    res = simulate_feedback_policy(sys_, target, policy, x0, horizon=0.3, dt=DT, control_period=0.02, record=True)
+    assert res.success[0] and 0.0 < res.reach_time[0] < 0.1
+    assert not res.success[1:].any()
+    # Queries at periods 0, 5, 10: the first one on all three, then only on the two still running.
+    assert [c.shape[0] for c in calls] == [3, 2, 2]
+    # Reference: the two remaining trajectories, simulated by hand with the same chunks.
+    x = x0[1:].copy()
+    for period in range(15):
+        if period % 5 == 0:
+            u = sys_.clip_control(-2.0 * x[:, :1] - 3.0 * x[:, 1:])
+            np.testing.assert_allclose(calls[period // 5][-2:], x, rtol=0, atol=0)
+        for _ in range(4):
+            x = sys_.rk4_step(x, u, DT)
+    np.testing.assert_allclose(res.extras["final_energy"][1:], sys_.hamiltonian(x), rtol=1e-12)
+
+
+def test_feedback_chunk_rejects_bad_shape():
+    sys_ = SpringMass()
+    target = TargetSet(sys_, np.array([50.0, 50.0]), 0.1)
+    with pytest.raises(ValueError):
+        simulate_feedback_policy(
+            sys_, target, lambda X: np.zeros((X.shape[0] + 1, 4, 1)), np.array([[1.0, 0.0]]), 0.1, DT, 0.02
+        )

@@ -214,7 +214,7 @@ def main(argv=None) -> None:
 
     cfg = get_config("single_pendulum")
     sdir = Path(args.out) / cfg.system_name
-    K = AssignmentSet.load(sdir / "assignments.npz").from_demos(range(args.num_demos))
+    K = AssignmentSet.load(sdir / f"assignments_M{args.num_demos}.npz")  # built from the first M demos only
     demo_names = [e.name for e in cfg.experts]
     states = {"custom": tuple(args.x0)} if args.x0 else DEFAULT_STATES
     for name, x0 in states.items():

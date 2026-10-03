@@ -4,26 +4,26 @@ Steps (paper, Section IV):
 
 1. NMPC expert demonstrations D = {(x_j, u_j, T_j)}_{j=1}^5 (loaded from
    ``<out>/<system>/demonstrations.npz`` when present, otherwise generated).
-2. Lipschitz constants L_H, L on X = {H <= H_X} (Assumptions 1-2) and the
-   assignment set K of all demonstrations (Algorithm 1), saved to
-   ``assignments.npz``.  K_M, built from the first M demonstrations, is the
-   subset of K with demo id < M because Algorithm 1 treats every
-   demonstration independently.
-3. ``num_inits`` test states uniform on {H <= H_bar}.
-4. For M in ``cfg.num_demos``: the NCP pi_{K_M} (Definition 7, executed as in
-   Remark 2) and vanilla BC trained on the same first M demonstrations are
-   rolled out from the same initial states; success rate and the average
-   reach time (unsuccessful runs count as the horizon) are recorded, together
-   with the empirical checks of Theorems 2-4 for K_M.
+2. ``num_inits`` test states uniform on {H <= H_bar}.
+3. Ablation: PPO (no demonstrations), trained once per seed.
+4. For M in ``cfg.num_demos``, from the first M demonstrations only:
+   the chain policy (Lipschitz constants + Algorithm 1 -> K_M, executed as in
+   Remark 2), vanilla BC and (ablation) a diffusion policy.  All methods are
+   rolled out from the same initial states; success rate, average reach time
+   (unsuccessful runs count as the horizon) and the wall-clock training time
+   are recorded, together with the empirical checks of Theorems 2-4 for K_M.
 
-Outputs under ``<out>/<system>/``: ``demonstrations.npz``, ``assignments.npz``,
-``results.json`` and ``rollouts.npz`` (per-trajectory outcomes).
+Outputs under ``<out>/<system>/``: ``demonstrations.npz``, ``assignments_M<M>.npz``
+(``assignments.npz`` = largest M), ``results.json``, ``rollouts.npz``
+(per-trajectory outcomes), ``training_time.csv`` and ``models/`` (PPO and
+diffusion-policy weights of the first seed).
 """
 
 from __future__ import annotations
 
 import json
 import math
+import os
 import time
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
@@ -43,6 +43,9 @@ DEMOS_FILE = "demonstrations.npz"
 ASSIGNMENTS_FILE = "assignments.npz"
 RESULTS_FILE = "results.json"
 ROLLOUTS_FILE = "rollouts.npz"
+ASSIGNMENTS_M_FILE = "assignments_M{}.npz"
+TRAINING_TIME_FILE = "training_time.csv"
+MODELS_DIR = "models"
 
 
 # ----------------------------------------------------------------- utilities
@@ -163,35 +166,44 @@ def evaluate_chain(system, target, K_M: AssignmentSet, demos_M, cfg: ExperimentC
     return summary, res
 
 
-def evaluate_bc(system, target, demos_M, cfg: ExperimentConfig, X0, log) -> tuple:
-    """Train vanilla BC on the first M demos for every seed and roll it out from X0.
+def evaluate_learned(method: str, train, system, target, cfg: ExperimentConfig, X0, seeds, log,
+                     model_path=None) -> tuple:
+    """Train a learned baseline for every seed and roll it out from X0.
 
-    Returns (summary dict, success (S, B), reach_time (S, B)).  ``pooled`` pools the S x B
-    trajectories (its mean equals the mean of the per-seed means); it is what the figures show.
+    ``train(seed) -> (policy, info)``; the training time is the wall-clock time of that call.
+    Returns (summary dict, success (S, B), reach_time (S, B), training-time rows).  ``pooled``
+    pools the S x B trajectories (its mean equals the mean of the per-seed means).
     """
-    from symplectic_ncp.baselines.behavior_cloning import imitation_dataset, train_behavior_cloning
     from symplectic_ncp.simulation.closed_loop import simulate_feedback_policy
 
-    per_seed, results = [], []
-    for seed in cfg.bc.seeds:
+    per_seed, results, rows = [], [], []
+    for seed in seeds:
         t0 = time.perf_counter()
-        policy = train_behavior_cloning(system, demos_M, cfg.bc, seed)
+        policy, info = train(int(seed))
         train_time = time.perf_counter() - t0
+        if hasattr(policy, "reset"):
+            policy.reset(int(seed))  # deterministic sampling noise (diffusion policy)
+        if model_path is not None and seed == seeds[0] and hasattr(policy, "save"):
+            policy.save(model_path)
         t0 = time.perf_counter()
         res = simulate_feedback_policy(system, target, policy, X0, cfg.horizon, cfg.sim_dt, cfg.control_period)
         rollout_time = time.perf_counter() - t0
         results.append(res)
-        per_seed.append({"seed": int(seed), **res.summary(), "timing": {"train_s": train_time, "rollout_s": rollout_time}})
+        device = str((info or {}).get("device", "cpu"))
+        per_seed.append({"seed": int(seed), **res.summary(),
+                         "timing": {"train_s": train_time, "rollout_s": rollout_time}, "device": device})
+        rows.append({"method": method, "seed": int(seed), "train_seconds": train_time, "device": device})
         log(
-            f"  bc[{seed}]  success={per_seed[-1]['success_rate']:.3f}  "
+            f"  {method}[{seed}]  success={per_seed[-1]['success_rate']:.3f}  "
             f"time={per_seed[-1]['mean_reach_time']:.2f}+-{per_seed[-1]['std_reach_time']:.2f}s  "
-            f"(train {train_time:.1f}s, rollout {rollout_time:.1f}s)"
+            f"(train {train_time:.1f}s on {device}, rollout {rollout_time:.1f}s)"
         )
     success = np.stack([r.success for r in results])
     reach = np.stack([r.reach_time for r in results])
     pooled = RolloutResult(success.reshape(-1), reach.reshape(-1), cfg.horizon).summary()
     rates = np.asarray([s["success_rate"] for s in per_seed])
     times = np.asarray([s["mean_reach_time"] for s in per_seed])
+    train_times = np.asarray([s["timing"]["train_s"] for s in per_seed])
     summary = {
         "seeds": per_seed,
         "mean_over_seeds": {
@@ -199,26 +211,71 @@ def evaluate_bc(system, target, demos_M, cfg: ExperimentConfig, X0, log) -> tupl
             "success_rate_std": float(rates.std()),
             "mean_reach_time": float(times.mean()),
             "mean_reach_time_std": float(times.std()),
+            "train_seconds": float(train_times.mean()),
+            "train_seconds_std": float(train_times.std()),
         },
         "pooled": pooled,
-        "num_samples": int(imitation_dataset(demos_M, cfg.bc.sample_grid)[0].shape[0]),
-        "sample_grid": cfg.bc.sample_grid,
     }
-    return summary, success, reach
+    return summary, success, reach, rows
+
+
+def write_training_times(path, rows: list[dict]) -> Path:
+    """Raw training times, one row per (system, method, M, seed)."""
+    import csv
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fields = ["system", "method", "M", "seed", "train_seconds", "device", "uses_demonstrations", "notes"]
+    with open(path, "w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fields)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({k: row.get(k, "") for k in fields})
+    return path
+
+
+def write_all_training_times(out_dir, systems) -> Path:
+    """Concatenate ``<out>/<system>/training_time.csv`` into ``<out>/training_time.csv``."""
+    import csv
+
+    rows = []
+    for name in systems:
+        path = system_dir(out_dir, name) / TRAINING_TIME_FILE
+        if path.exists():
+            with open(path, newline="") as fh:
+                rows += list(csv.DictReader(fh))
+    return write_training_times(Path(out_dir) / TRAINING_TIME_FILE, rows)
+
+
+def _warm_up_gpu() -> None:
+    """Create the CUDA context before any timed training (a one-off process cost, not training)."""
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            torch.zeros(1, device="cuda")
+            torch.cuda.synchronize()
+    except Exception:  # pragma: no cover - CPU-only installations
+        pass
 
 
 # ------------------------------------------------------------------- driver
-def run_system(cfg: ExperimentConfig, out_dir, force_experts: bool = False, verbose: bool = True) -> dict:
-    """Run the Section IV protocol for ``cfg`` and write the outputs under ``out_dir/<system>/``."""
+def run_system(cfg: ExperimentConfig, out_dir, force_experts: bool = False, verbose: bool = True,
+               methods=("chain", "bc", "dp", "ppo")) -> dict:
+    """Run the Section IV protocol (plus the DP / PPO ablations) and write the outputs under ``out_dir/<system>/``."""
     from symplectic_ncp.chain.construction import build_certified_assignment_set
     from symplectic_ncp.evaluation.initial_states import sample_initial_states
 
     log = _Logger(cfg.system_name, verbose)
     sdir = system_dir(out_dir, cfg.system_name)
     sdir.mkdir(parents=True, exist_ok=True)
+    (sdir / MODELS_DIR).mkdir(exist_ok=True)
     system = cfg.make_system()
     target = cfg.make_target(system)
     timing: dict[str, float] = {}
+    train_rows: list[dict] = []
+    if "dp" in methods or "ppo" in methods:
+        _warm_up_gpu()
 
     # 1. demonstrations
     t0 = time.perf_counter()
@@ -227,53 +284,85 @@ def run_system(cfg: ExperimentConfig, out_dir, force_experts: bool = False, verb
     if max(cfg.num_demos) > len(demos):
         raise ValueError(f"num_demos={cfg.num_demos} exceeds the {len(demos)} available demonstrations")
 
-    # 2. Lipschitz constants and Algorithm 1 on all demonstrations
-    t0 = time.perf_counter()
-    K, (L_H, L, H_X) = build_certified_assignment_set(system, target, demos, cfg.chain, cfg.H_bar)
-    lip = {"L_H": float(L_H), "L": float(L), "H_X": float(H_X)}
-    log(f"Lipschitz on X={{H<={H_X:.4g}}} (contains S_0, the demos and Supp(K)): L_H={L_H:.4g}, L={L:.4g}")
-    timing["assignment_set_s"] = time.perf_counter() - t0
-    if abs(K.dt - cfg.sim_dt) > 1e-12:
-        raise ValueError(f"snippet step {K.dt} differs from sim_dt {cfg.sim_dt}")
-    K.save(sdir / ASSIGNMENTS_FILE)
-    log(
-        f"assignment set: N={len(K)} per demo {np.bincount(K.demo_ids, minlength=len(demos)).tolist()}, "
-        f"r in [{K.radii.min() if len(K) else 0:.3g}, {K.radii.max() if len(K) else 0:.3g}] "
-        f"({timing['assignment_set_s']:.1f}s)"
-    )
-
-    # 3. test initial states
+    # 2. test initial states
     X0 = sample_initial_states(system, cfg)
     log(f"{X0.shape[0]} initial states uniform on {{H <= {cfg.H_bar}}}, horizon {cfg.horizon}s")
+    arrays = {"initial_states": X0, "num_demos": np.asarray(cfg.num_demos), "bc_seeds": np.asarray(cfg.bc.seeds),
+              "dp_seeds": np.asarray(cfg.dp_seeds), "ppo_seeds": np.asarray(cfg.ppo_seeds)}
 
-    # 4. per-M evaluation
-    per_M, arrays = [], {"initial_states": X0, "num_demos": np.asarray(cfg.num_demos), "bc_seeds": np.asarray(cfg.bc.seeds)}
+    # 3. PPO does not use demonstrations: one training per seed, evaluated once
+    ppo = None
+    if "ppo" in methods:
+        from symplectic_ncp.baselines.ppo import ppo_config, train_ppo
+
+        ppo_cfg = ppo_config(cfg.system_name)
+        log("PPO (no demonstrations)")
+        ppo, succ, reach, rows = evaluate_learned(
+            "ppo", lambda seed: train_ppo(system, target, cfg, ppo_cfg, seed), system, target, cfg, X0,
+            cfg.ppo_seeds, log, model_path=sdir / MODELS_DIR / "ppo_seed{}.npz".format(cfg.ppo_seeds[0]),
+        )
+        ppo["config"] = ppo_cfg
+        arrays["ppo_success"], arrays["ppo_reach_time"] = succ, reach
+        train_rows += [{**r, "M": "", "uses_demonstrations": False, "notes": "online RL, no demonstrations"}
+                       for r in rows]
+
+    # 4. per-M evaluation of the demonstration-based methods
+    per_M, lip, K = [], None, None
     for M in cfg.num_demos:
         log(f"M={M}")
         demos_M = demos[:M]
-        K_M = K.from_demos(range(M))
         entry: dict = {"M": int(M)}
-        if len(K_M):
+        if "chain" in methods:
+            # Algorithm 1 on the first M demonstrations only (constants included): the chain policy's training
+            t0 = time.perf_counter()
+            K_M, (L_H, L, H_X) = build_certified_assignment_set(system, target, demos_M, cfg.chain, cfg.H_bar)
+            train_time = time.perf_counter() - t0
+            if abs(K_M.dt - cfg.sim_dt) > 1e-12:
+                raise ValueError(f"snippet step {K_M.dt} differs from sim_dt {cfg.sim_dt}")
+            lip, K = {"L_H": float(L_H), "L": float(L), "H_X": float(H_X)}, K_M
+            K_M.save(sdir / ASSIGNMENTS_M_FILE.format(M))
+            log(f"  chain  Algorithm 1: N={len(K_M)}, X={{H<={H_X:.4g}}}, L_H={L_H:.4g}, L={L:.4g} ({train_time:.1f}s)")
             entry["chain"], chain_res = evaluate_chain(system, target, K_M, demos_M, cfg, X0, lip, log)
+            entry["chain"]["train_seconds"] = train_time
+            entry["chain"]["lipschitz"] = lip
             arrays[f"chain_success_M{M}"] = chain_res.success
             arrays[f"chain_reach_time_M{M}"] = chain_res.reach_time
             for key, val in chain_res.extras.items():
                 arrays[f"chain_{key}_M{M}"] = np.asarray(val)
-        else:
-            # Algorithm 1 extracted nothing from these demos: pi_K is the default u_0 = 0 everywhere.
-            from symplectic_ncp.simulation.closed_loop import simulate_feedback_policy
+            workers = cfg.chain.workers or min(M, os.cpu_count() or 1)
+            train_rows.append({"method": "chain", "M": M, "seed": "", "train_seconds": train_time,
+                               "device": f"cpu ({min(workers, M)} processes)", "uses_demonstrations": True,
+                               "notes": "Algorithm 1 incl. Lipschitz constants; deterministic"})
+        if "bc" in methods:
+            from symplectic_ncp.baselines.behavior_cloning import imitation_dataset, train_behavior_cloning
 
-            log("  chain  K_M is empty; pi_K is the zero input everywhere")
-            zero = lambda X: np.zeros((np.shape(X)[0], system.control_dim))  # noqa: E731
-            empty = simulate_feedback_policy(system, target, zero, X0, cfg.horizon, cfg.sim_dt, cfg.control_period)
-            entry["chain"] = {**empty.summary(), "num_assignments": 0, "theory": None}
-            arrays[f"chain_success_M{M}"] = empty.success
-            arrays[f"chain_reach_time_M{M}"] = empty.reach_time
-        entry["bc"], bc_succ, bc_reach = evaluate_bc(system, target, demos_M, cfg, X0, log)
-        arrays[f"bc_success_M{M}"] = bc_succ
-        arrays[f"bc_reach_time_M{M}"] = bc_reach
+            entry["bc"], succ, reach, rows = evaluate_learned(
+                "bc", lambda seed: (train_behavior_cloning(system, demos_M, cfg.bc, seed), {"device": "cpu"}),
+                system, target, cfg, X0, cfg.bc.seeds, log,
+            )
+            entry["bc"]["num_samples"] = int(imitation_dataset(demos_M, cfg.bc.sample_grid)[0].shape[0])
+            entry["bc"]["sample_grid"] = cfg.bc.sample_grid
+            arrays[f"bc_success_M{M}"], arrays[f"bc_reach_time_M{M}"] = succ, reach
+            train_rows += [{**r, "M": M, "uses_demonstrations": True, "notes": "MLP (24, 24, 16), 40 epochs"}
+                           for r in rows]
+        if "dp" in methods:
+            from symplectic_ncp.baselines.diffusion_policy import diffusion_policy_config, train_diffusion_policy
+
+            dp_cfg = diffusion_policy_config(cfg.system_name)
+            entry["dp"], succ, reach, rows = evaluate_learned(
+                "dp", lambda seed: train_diffusion_policy(system, demos_M, dp_cfg, seed), system, target, cfg, X0,
+                cfg.dp_seeds, log, model_path=sdir / MODELS_DIR / f"dp_M{M}_seed{cfg.dp_seeds[0]}.pt",
+            )
+            entry["dp"]["config"] = dp_cfg
+            arrays[f"dp_success_M{M}"], arrays[f"dp_reach_time_M{M}"] = succ, reach
+            train_rows += [{**r, "M": M, "uses_demonstrations": True,
+                            "notes": f"DDPM over action chunks, {dp_cfg.iterations} iterations"} for r in rows]
         per_M.append(entry)
+    if K is not None:
+        K.save(sdir / ASSIGNMENTS_FILE)  # K built from all demonstrations (largest M)
     timing["total_s"] = time.perf_counter() - log.t0
+    train_rows = [{"system": cfg.system_name, **r} for r in train_rows]
+    write_training_times(sdir / TRAINING_TIME_FILE, train_rows)
 
     results = {
         "system": cfg.system_name,
@@ -288,7 +377,7 @@ def run_system(cfg: ExperimentConfig, out_dir, force_experts: bool = False, verb
         },
         "demonstrations": describe_demonstrations(system, target, demos),
         "lipschitz": lip,
-        "assignment_set": {
+        "assignment_set": None if K is None else {
             "N": len(K),
             "per_demo": np.bincount(K.demo_ids, minlength=len(demos)),
             "radius_min": float(K.radii.min()) if len(K) else None,
@@ -297,7 +386,9 @@ def run_system(cfg: ExperimentConfig, out_dir, force_experts: bool = False, verb
             "tau_max": float(K.durations.max()) if len(K) else None,
         },
         "num_initial_states": int(X0.shape[0]),
+        "ppo": ppo,
         "per_M": per_M,
+        "training_time": train_rows,
         "paper_reference": paper_reference(cfg.system_name),
         "timing": timing,
     }

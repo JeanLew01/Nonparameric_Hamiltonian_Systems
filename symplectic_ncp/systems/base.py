@@ -85,9 +85,16 @@ class HamiltonianSystem(ABC):
         """f(x, u) = J grad H(x) + G u, shape ``(B, n)``."""
         X = as_batch(x, self.state_dim)
         U = np.asarray(u, dtype=float)
-        U = np.broadcast_to(U if U.ndim == 0 else as_batch(U, self.control_dim), (X.shape[0], self.control_dim))
-        J, G = self.structure_matrices()
-        return self.grad_hamiltonian(X) @ J.T + U @ G.T
+        JT, GT = self._structure_transposed()
+        GU = np.full((1, self.control_dim), float(U)) @ GT if U.ndim == 0 else as_batch(U, self.control_dim) @ GT
+        return self.grad_hamiltonian(X) @ JT + GU  # (1, n) or (B, n) input term broadcasts over rows
+
+    def _structure_transposed(self) -> tuple[np.ndarray, np.ndarray]:
+        """Cached (J^T, G^T); the structure matrices are constant (Definition 1)."""
+        if getattr(self, "_JT_GT", None) is None:
+            J, G = self.structure_matrices()
+            self._JT_GT = (np.ascontiguousarray(J.T), np.ascontiguousarray(G.T))
+        return self._JT_GT
 
     def rk4_step(self, x, u, h) -> np.ndarray:
         """One RK4 step with zero-order-hold input; ``h`` is a scalar or ``(B,)``."""

@@ -200,3 +200,18 @@ def test_certified_assignment_set_fits_inside_X(case):
     K, (L_H, L, H_X) = build_certified_assignment_set(system, target, demos, chain, cfg.H_bar)
     assert max_energy_on_balls(system, K.centers, K.radii) <= H_X  # Assumption 1 holds on Supp(K)
     assert (L_H, L) == pytest.approx(system.lipschitz_constants(H_X))
+
+
+def test_vectorized_floor_blocks_match_the_scalar_loop(case, monkeypatch):
+    """The batched run of floor-advanced anchors is an exact re-implementation of the scalar loop."""
+    import symplectic_ncp.chain.construction as construction
+
+    _, system, target, demos, L_H, L, _ = case
+    fast = [extract_assignments(system, target, d, j, V0, L_H, L, "global", FLOOR) for j, d in enumerate(demos)]
+    monkeypatch.setattr(construction, "_floored_block", lambda system, target, demo, profiler, s, *a: (s, 4, False))
+    slow = [extract_assignments(system, target, d, j, V0, L_H, L, "global", FLOOR) for j, d in enumerate(demos)]
+    for K, S in zip(fast, slow):
+        assert len(K) == len(S)
+        for field in ("centers", "radii", "leads", "anchor_times"):
+            assert np.array_equal(getattr(K, field), getattr(S, field))
+        assert all(np.array_equal(a, b) for a, b in zip(K.controls, S.controls))
