@@ -31,6 +31,10 @@ initial states reach the target; it changes how soon they do.
 
 ![Single pendulum: residual, success rate and first wait against time](figures/single_reeb_time.png)
 
+At 20 s, D+T with K = 8 has already reached every state that either policy reaches by 120 s.
+
+![Single pendulum: success rate against the number of demonstrations](figures/single_success_by_demonstrations.png)
+
 **Double pendulum** (500 initial states per target, horizon 10,000 s).  Passive motion fails to reach
 a stored primitive from many initial states; exploration restores access, and transport then shortens
 the waiting.
@@ -43,7 +47,9 @@ the waiting.
 ![Double pendulum: the four policies](figures/double_policy_time.png)
 
 Exploration alone raises the coverage of a Poincaré section at 15 J from 5.1% under passive motion to
-32.3% at the largest gain after 5,000 s (`figures/poincare_diagnostic.png`).
+32.3% at the largest gain after 5,000 s.
+
+![Double pendulum: section visitation and coverage under exploration](figures/poincare_diagnostic.png)
 
 ## Contents
 

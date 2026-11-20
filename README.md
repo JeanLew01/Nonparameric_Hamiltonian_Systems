@@ -26,7 +26,8 @@ alternatives are slower to train or less reliable:
 
 > **Journal extension.**  The code, data and results of the follow-up paper, *Neuro-Inspired Control
 > Through Motor Primitive and Natural Motion Composition in Hamiltonian Systems*, are in
-> [`journal_extension/`](journal_extension/README.md).  The rest of this repository belongs to the
+> [`journal_extension/`](journal_extension/README.md); its main results are shown
+> [below](#journal-extension-exploration-and-transport).  The rest of this repository belongs to the
 > conference paper and is unchanged.
 
 
@@ -178,6 +179,38 @@ demonstrations.
 * **Vanilla BC** (paper): MLP (24, 24, 16), Adam, lr 1.2e-3, weight decay 5e-4, 40 epochs, batch 64.
 
 </details>
+
+
+## Journal extension: exploration and transport
+
+The follow-up paper, *Neuro-Inspired Control Through Motor Primitive and Natural Motion Composition in
+Hamiltonian Systems*, measures progress by an energy-based distance on the Reeb graph and adds two
+mechanisms to the chain policy.  **Exploration** uses energy-preserving inputs to bring the state to a
+stored primitive when the zero-input flow alone does not.  **Transport** certifies a stored primitive at
+further states along the zero-input flow, which shortens the waits between primitives.  The policies
+are D (demonstrations only), D+T (with transport), D+E (with exploration) and D+E+T.  Code, data and
+all results are in [`journal_extension/`](journal_extension/README.md).
+
+**Single pendulum** (500 initial states).  Transport does not change which states reach the target; it
+changes how soon they do.  With three demonstrations the mean reaching time falls from 31.5 s without
+transport to 7.6 s with K = 8 placements per anchor.
+
+![single pendulum, three demonstrations](journal_extension/figures/single_reeb_time.png)
+
+At 20 s, D+T has already reached every state that either policy reaches by 120 s.
+
+![single pendulum, demonstration budget](journal_extension/figures/single_success_by_demonstrations.png)
+
+**Double pendulum** (500 initial states per target, horizon 10,000 s).  From many initial states the
+zero-input flow does not reach a stored primitive within the horizon.  Exploration restores access, and
+transport then shortens the waiting.
+
+![double pendulum, four policies](journal_extension/figures/double_policy_time.png)
+
+Exploration alone spreads a trajectory over its energy level: after 5,000 s the coverage of a Poincaré
+section at 15 J rises from 5.1% without exploration to 32.3% at the largest gain.
+
+![double pendulum, section visitation](journal_extension/figures/poincare_diagnostic.png)
 
 
 ## Installation
