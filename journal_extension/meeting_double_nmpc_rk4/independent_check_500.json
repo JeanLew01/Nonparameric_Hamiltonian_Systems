@@ -1,0 +1,27 @@
+{
+ "states": 500,
+ "actions": 28626,
+ "finished_actions_replayed": 26137,
+ "stopped_at_centre": 2640,
+ "per_policy": {
+  "up/D": 869,
+  "up/D+E": 1492,
+  "up/D+T8": 686,
+  "up/D+E+T8": 1363,
+  "up/D+E+T2": 1394,
+  "up/D+E+T4": 1445,
+  "down/D": 1976,
+  "down/D+E": 2847,
+  "down/D+T8": 2628,
+  "down/D+E+T8": 4794,
+  "down/D+E+T2": 4070,
+  "down/D+E+T4": 5062
+ },
+ "worst": {
+  "end_V_difference": 3.204547452639872e-05,
+  "membership_ratio": 0.9999999999999835,
+  "min_drop": 0.015803124050648876,
+  "min_rate_margin": 0.015703124050648876
+ },
+ "violations": []
+}

@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-06",
+  "scope": "Independent numerical comparisons performed after inspection of reference_single/benchmark.py; no validated enclosures claimed.",
+  "elliptic_flow_comparison": {
+    "reference_integrator": "DOP853",
+    "rtol": 2e-12,
+    "atol": 1e-13,
+    "energies": [0.001, 0.5, 10, 38, 39.239, 39.241, 40, 80, 159],
+    "momentum_signs": [-1, 1],
+    "times": [-0.37, 0, 0.25, 1.3],
+    "comparisons": 72,
+    "maximum_wrapped_state_discrepancy": 4.64037755296e-11,
+    "maximum_energy_discrepancy": 1.13686837722e-13
+  },
+  "passive_arrival_comparison": {
+    "source": "reference_single/pilot_actions.npz",
+    "record_indices": [0, 36, 72, 110, 147, 184, 234, 270],
+    "method": "Independent Hermite polynomial event partition plus exact elliptic flow evaluator on a local interval around each reported arrival.",
+    "arrivals_found": 8,
+    "all_returned_states_inside_actual_ball": true,
+    "maximum_absolute_time_difference_seconds": 5.1175e-14,
+    "limitation": "Local arrival check; does not certify absence of earlier global intersections."
+  },
+  "oscillator_step_refinement": {
+    "initial_state": [1, 0],
+    "target_center": [0, -1],
+    "target_radius": 0.05,
+    "exact_entry_formula": "pi/2 - 2*asin(0.025)",
+    "steps": [0.2, 0.1, 0.05],
+    "absolute_time_errors": [1.85361776448e-5, 1.24296944293e-6, 7.80062745509e-8]
+  },
+  "focused_regressions": {
+    "test_file": "test_ball_events.py",
+    "tests_passed": 8,
+    "observed_runtime_seconds": 1.03
+  },
+  "full_review": "../../review/round3_independent_review.txt"
+}

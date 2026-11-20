@@ -1,0 +1,5 @@
+__pycache__/
+_audit_cache/
+*.pyc
+*.nbc
+*.nbi

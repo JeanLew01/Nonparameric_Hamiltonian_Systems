@@ -1,0 +1,193 @@
+{
+ "constants": {
+  "v0": 0.001,
+  "L": 19.62,
+  "L_H": 21.42888004539668,
+  "H_X": 168.0,
+  "L_H_on_conference_grid": 21.427623647580166,
+  "min_advance": 0.0001,
+  "min_radius": 1e-10,
+  "reserve": 1e-08
+ },
+ "assignments": 64563,
+ "by_demonstration": [
+  16064,
+  16064,
+  22041,
+  5197,
+  5197
+ ],
+ "max_energy_on_supports": 160.24089973163237,
+ "demonstrations": [
+  {
+   "demo": 0,
+   "name": "rotation_cw",
+   "anchors_tried": 16065,
+   "stored": 16064,
+   "rejected_radius": 0,
+   "rejected_integration": 0,
+   "binding_progress": 14541,
+   "binding_region": 0,
+   "passive_jumps": 32,
+   "stop": "no duration with positive radius",
+   "max_substep_error": 1.0501891079581146e-11,
+   "stop_time": 40.1,
+   "stop_V": -0.049621191168270684,
+   "duration": 42.185,
+   "radius_quantiles": [
+    3.526392661873046e-07,
+    0.0013101321851051691,
+    0.007030767800030131,
+    0.010612105023417438,
+    0.011736747386451262
+   ],
+   "snippet_duration_quantiles": [
+    1.361807958346617e-06,
+    0.0050325118335892965,
+    0.06253111058589411,
+    0.06657973646998142,
+    0.06835684948099015
+   ],
+   "anchor_energy_range": [
+    39.19240964027995,
+    160.00000000387482
+   ],
+   "seconds": 20.750678126999446
+  },
+  {
+   "demo": 1,
+   "name": "rotation_ccw",
+   "anchors_tried": 16065,
+   "stored": 16064,
+   "rejected_radius": 0,
+   "rejected_integration": 0,
+   "binding_progress": 14541,
+   "binding_region": 0,
+   "passive_jumps": 32,
+   "stop": "no duration with positive radius",
+   "max_substep_error": 1.0494922502176261e-11,
+   "stop_time": 40.1,
+   "stop_V": -0.04962119116900254,
+   "duration": 42.185,
+   "radius_quantiles": [
+    3.526392651927552e-07,
+    0.001310132185104943,
+    0.007030767800031291,
+    0.010612105023417622,
+    0.011736747386450742
+   ],
+   "snippet_duration_quantiles": [
+    1.3618079515254067e-06,
+    0.005032511833496756,
+    0.06253111058589553,
+    0.06657973646999062,
+    0.06835684948099015
+   ],
+   "anchor_energy_range": [
+    39.19240964027546,
+    160.00000000387482
+   ],
+   "seconds": 39.905990414999906
+  },
+  {
+   "demo": 2,
+   "name": "libration_rest",
+   "anchors_tried": 22041,
+   "stored": 22041,
+   "rejected_radius": 0,
+   "rejected_integration": 0,
+   "binding_progress": 22041,
+   "binding_region": 0,
+   "passive_jumps": 31,
+   "stop": "no further input",
+   "max_substep_error": 1.1945145379225046e-12,
+   "duration": 105.485,
+   "radius_quantiles": [
+    1.973820377728076e-07,
+    0.00011212642711016938,
+    0.00108874466545124,
+    0.0045278036457461895,
+    0.005833687664041494
+   ],
+   "snippet_duration_quantiles": [
+    2.744910375440668e-06,
+    0.007779798691867654,
+    0.06550520533355098,
+    0.07180000000000167,
+    0.115
+   ],
+   "anchor_energy_range": [
+    0.0,
+    39.19152725276269
+   ],
+   "seconds": 64.9800025959994
+  },
+  {
+   "demo": 3,
+   "name": "rest_p1.5",
+   "anchors_tried": 5197,
+   "stored": 5197,
+   "rejected_radius": 0,
+   "rejected_integration": 0,
+   "binding_progress": 5197,
+   "binding_region": 0,
+   "passive_jumps": 10,
+   "stop": "no further input",
+   "max_substep_error": 1.1539533999607468e-12,
+   "duration": 40.375,
+   "radius_quantiles": [
+    1.7286618065064577e-06,
+    0.000559900248455549,
+    0.004343563719134514,
+    0.0054301877933172074,
+    0.0058024380519058295
+   ],
+   "snippet_duration_quantiles": [
+    9.071681834029732e-06,
+    0.005204805115507042,
+    0.0637848973948428,
+    0.0672162970411802,
+    0.06872484911676736
+   ],
+   "anchor_energy_range": [
+    18.23213610319676,
+    39.19152930650341
+   ],
+   "seconds": 71.20217847599997
+  },
+  {
+   "demo": 4,
+   "name": "rest_m1.5",
+   "anchors_tried": 5197,
+   "stored": 5197,
+   "rejected_radius": 0,
+   "rejected_integration": 0,
+   "binding_progress": 5197,
+   "binding_region": 0,
+   "passive_jumps": 10,
+   "stop": "no further input",
+   "max_substep_error": 1.1539533999607468e-12,
+   "duration": 40.375,
+   "radius_quantiles": [
+    1.7286618065064577e-06,
+    0.000559900248455549,
+    0.004343563719134514,
+    0.0054301877933172074,
+    0.0058024380519058295
+   ],
+   "snippet_duration_quantiles": [
+    9.071681834029732e-06,
+    0.005204805115507042,
+    0.0637848973948428,
+    0.0672162970411802,
+    0.06872484911676736
+   ],
+   "anchor_energy_range": [
+    18.23213610319676,
+    39.19152930650341
+   ],
+   "seconds": 77.39916574400013
+  }
+ ],
+ "seconds": 82.23074408399953
+}

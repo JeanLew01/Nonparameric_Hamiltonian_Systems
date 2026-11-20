@@ -1,0 +1,8 @@
+# Versions used for the stored runs (Python 3.12).
+numpy==2.3.4
+scipy==1.16.3
+numba==0.68.0
+llvmlite==0.50.0
+matplotlib==3.10.7
+casadi==3.7.2      # NMPC demonstrations
+do-mpc==5.1.1      # NMPC expert of the conference package (reference_code_7974f19e)

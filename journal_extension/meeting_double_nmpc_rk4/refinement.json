@@ -1,0 +1,92 @@
+{
+ "states": [
+  0,
+  6,
+  12,
+  18,
+  24,
+  30,
+  36,
+  42,
+  48,
+  54,
+  60,
+  66
+ ],
+ "trials": 96,
+ "labels_changed": 10,
+ "groups": {
+  "up/D": {
+   "hits_main_step": 8,
+   "hits_half_step": 8,
+   "labels_changed": 0,
+   "restricted_mean_time_main": 3653.6443412047824,
+   "restricted_mean_time_half": 3644.9433370279203,
+   "actions_increasing_V_half_step": 0,
+   "starts_outside_support_half_step": 0
+  },
+  "up/D+E": {
+   "hits_main_step": 12,
+   "hits_half_step": 12,
+   "labels_changed": 0,
+   "restricted_mean_time_main": 367.80392002289454,
+   "restricted_mean_time_half": 302.49903055602937,
+   "actions_increasing_V_half_step": 0,
+   "starts_outside_support_half_step": 0
+  },
+  "up/D+T8": {
+   "hits_main_step": 11,
+   "hits_half_step": 10,
+   "labels_changed": 1,
+   "restricted_mean_time_main": 1081.4405756294195,
+   "restricted_mean_time_half": 1859.7228744079775,
+   "actions_increasing_V_half_step": 0,
+   "starts_outside_support_half_step": 0
+  },
+  "up/D+E+T8": {
+   "hits_main_step": 12,
+   "hits_half_step": 12,
+   "labels_changed": 0,
+   "restricted_mean_time_main": 147.0166681594222,
+   "restricted_mean_time_half": 68.96478895882551,
+   "actions_increasing_V_half_step": 0,
+   "starts_outside_support_half_step": 0
+  },
+  "down/D": {
+   "hits_main_step": 4,
+   "hits_half_step": 6,
+   "labels_changed": 6,
+   "restricted_mean_time_main": 7057.186453282404,
+   "restricted_mean_time_half": 5478.422625012354,
+   "actions_increasing_V_half_step": 0,
+   "starts_outside_support_half_step": 0
+  },
+  "down/D+E": {
+   "hits_main_step": 12,
+   "hits_half_step": 12,
+   "labels_changed": 0,
+   "restricted_mean_time_main": 514.4432200051109,
+   "restricted_mean_time_half": 397.91502193295065,
+   "actions_increasing_V_half_step": 0,
+   "starts_outside_support_half_step": 0
+  },
+  "down/D+T8": {
+   "hits_main_step": 9,
+   "hits_half_step": 6,
+   "labels_changed": 3,
+   "restricted_mean_time_main": 2897.1371488439167,
+   "restricted_mean_time_half": 5232.423798271272,
+   "actions_increasing_V_half_step": 0,
+   "starts_outside_support_half_step": 0
+  },
+  "down/D+E+T8": {
+   "hits_main_step": 12,
+   "hits_half_step": 12,
+   "labels_changed": 0,
+   "restricted_mean_time_main": 72.8251581031149,
+   "restricted_mean_time_half": 81.96724810924415,
+   "actions_increasing_V_half_step": 0,
+   "starts_outside_support_half_step": 0
+  }
+ }
+}

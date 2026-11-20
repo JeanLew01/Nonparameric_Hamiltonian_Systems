@@ -24,6 +24,11 @@ alternatives are slower to train or less reliable:
 * PPO needs 10 million environment steps and 2.5 minutes of GPU training.
 * Behavior cloning on the same data succeeds from only 24% of the test states.
 
+> **Journal extension.**  The code, data and results of the follow-up paper, *Neuro-Inspired Control
+> Through Motor Primitive and Natural Motion Composition in Hamiltonian Systems*, are in
+> [`journal_extension/`](journal_extension/README.md).  The rest of this repository belongs to the
+> conference paper and is unchanged.
+
 
 ## Why chain policies?
 

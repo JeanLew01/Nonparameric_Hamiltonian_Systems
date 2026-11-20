@@ -1,0 +1,177 @@
+{
+  "study": "Effort-minimal NMPC demonstrations, one push per period (one-sided torque in the libration demonstrations), demonstrations 4 and 5 from rest at +-1.5 rad, Algorithm 1 supports with V, transport of whole pushes by fiber realization; 18 Nov 2026",
+  "frozen_input_sha256": {
+    "reference_single/benchmark.py": "403754a29b1bd7b263e6392326aec92c7bd25fe85bf54d830960a908762adc66",
+    "reference_single/initial_states.npz": "72e2268e646b0eaeeada17c1dd11e823b00d0fdac3d901f203481930b9cd7272",
+    "event_detection/ball_events.py": "90732c7303ebd91d91e6f721ed3a48e47e170622251117d03307023f7a7b2db5",
+    "reference_code_7974f19e/symplectic_ncp/chain/construction.py": "42c371ce99e72d2f182b94b69bc86ef2586915b180fac7c2249acdb530378d4e",
+    "reference_code_7974f19e/symplectic_ncp/experts/generate.py": "50ed32c8d9d71dd123d5b8c1a525458ee696927848a004db0ad0118dea138721",
+    "meeting_single_nmpc_effort_v3/expert.py": "3fd9dba1cf8a366058f2ace3d8f2cdc7dfa40647c3b9f6205d0e2c2739b62b32",
+    "meeting_single_nmpc_effort_v3/extract.py": "af7afc1ce9816e306e321b4a36cbced2cdc43fda8edbc71f9a122bccb2fb8699",
+    "meeting_single_nmpc_effort_v3/demonstrations.npz": "81f6c3bbb997a3d39771973ea020e1752968167149fc83fc84052a453a18e6eb",
+    "meeting_single_nmpc_effort_v3/original_library.npz": "80ed9aadc768e57c79ccd4e7badc09087a41b7779fb90115989dc217b761b591"
+  },
+  "unchanged": [
+    "plant, target, input bound |u|<=20 of the plant",
+    "500 initial states (seed 2026), 2000 s horizon",
+    "placements z=Phi_{jT/K}(x_i), K in {1,2,4,8}",
+    "selector, terminal rule, guard, event detection and integration: byte-identical copies of ../meeting_single_nmpc_fiber (policy.py, evaluate.py, fast_access.py, histories.py)"
+  ],
+  "evaluation_groups": [
+    {
+      "M": 1,
+      "K": 1
+    },
+    {
+      "M": 1,
+      "K": 8
+    },
+    {
+      "M": 2,
+      "K": 1
+    },
+    {
+      "M": 2,
+      "K": 8
+    },
+    {
+      "M": 3,
+      "K": 1
+    },
+    {
+      "M": 3,
+      "K": 8
+    },
+    {
+      "M": 4,
+      "K": 1
+    },
+    {
+      "M": 4,
+      "K": 8
+    },
+    {
+      "M": 5,
+      "K": 1
+    },
+    {
+      "M": 5,
+      "K": 8
+    },
+    {
+      "M": 3,
+      "K": 2
+    },
+    {
+      "M": 3,
+      "K": 4
+    }
+  ],
+  "horizon": 2000.0,
+  "summary_horizons": [
+    5.0,
+    10.0,
+    20.0,
+    50.0,
+    100.0,
+    2000.0
+  ],
+  "refinement": {
+    "groups": [
+      {
+        "M": 1,
+        "K": 1
+      },
+      {
+        "M": 1,
+        "K": 8
+      },
+      {
+        "M": 2,
+        "K": 1
+      },
+      {
+        "M": 2,
+        "K": 8
+      },
+      {
+        "M": 3,
+        "K": 1
+      },
+      {
+        "M": 3,
+        "K": 8
+      },
+      {
+        "M": 4,
+        "K": 1
+      },
+      {
+        "M": 4,
+        "K": 8
+      },
+      {
+        "M": 5,
+        "K": 1
+      },
+      {
+        "M": 5,
+        "K": 8
+      }
+    ],
+    "subdivisions": 8,
+    "initial_indices": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200,
+      210,
+      220,
+      230,
+      240,
+      250,
+      260,
+      270,
+      280,
+      290,
+      300,
+      310,
+      320,
+      330,
+      340,
+      350,
+      360,
+      370,
+      380,
+      390,
+      400,
+      410,
+      420,
+      430,
+      440,
+      450,
+      460,
+      470,
+      480,
+      490
+    ]
+  },
+  "design_note": "Third version, after the user remark of 18 Nov 2026 on Figure 4(b): for K = 1, 2, 4 the success curves shared one slow tail (libration states gained only at K = 8). Two changes against ../meeting_single_nmpc_effort_v2: (1) the libration demonstrations use torque of one sign, so every demonstration pushes once per period; (2) a transported assignment replays the remainder of the push that contains its anchor. Expert bound, eta, start states, Algorithm 1, selector, guard and evaluation are unchanged."
+}

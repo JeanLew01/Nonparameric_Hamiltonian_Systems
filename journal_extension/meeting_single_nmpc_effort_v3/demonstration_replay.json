@@ -1,0 +1,152 @@
+{
+ "rotation_cw": {
+  "start": [
+   1.5707963267948966,
+   -33.51178897045038
+  ],
+  "duration": 42.185,
+  "control_period": 0.02,
+  "max_abs_input": 1.9999998410661501,
+  "replay_end_target_gap": -0.0026206118343843343,
+  "replay_end_V": -0.04963352115706954,
+  "replay_end_energy": 39.19161647884293,
+  "replay_first_target_entry": 42.185,
+  "replay_max_energy": 160.00000000000088,
+  "stored_max_energy": 160.00000000387482,
+  "replay_minus_stored": 2.267233652230834e-09,
+  "inside_target": true,
+  "inside_operating_region": true,
+  "pushes": 32,
+  "active_time": 9.22,
+  "active_fraction_until_V0": 0.22933034044145156,
+  "time_V_reaches_0": 40.095,
+  "largest_V_increase_per_step": 1.340652033832157e-09,
+  "min_momentum_ratio_at_full_torque": 0.9440096226358068,
+  "push_duration_range": [
+   0.06,
+   0.32
+  ],
+  "impulse": 18.379993301985,
+  "squared_effort": 36.73187088249873
+ },
+ "rotation_ccw": {
+  "start": [
+   -1.5707963267948966,
+   33.51178897045038
+  ],
+  "duration": 42.185,
+  "control_period": 0.02,
+  "max_abs_input": 1.9999998410661501,
+  "replay_end_target_gap": -0.0026206118021494113,
+  "replay_end_V": -0.04963352114678088,
+  "replay_end_energy": 39.19161647885322,
+  "replay_first_target_entry": 42.185,
+  "replay_max_energy": 160.0000000000009,
+  "stored_max_energy": 160.00000000387482,
+  "replay_minus_stored": 2.2679134181605395e-09,
+  "inside_target": true,
+  "inside_operating_region": true,
+  "pushes": 32,
+  "active_time": 9.22,
+  "active_fraction_until_V0": 0.22933034044145156,
+  "time_V_reaches_0": 40.095,
+  "largest_V_increase_per_step": 1.340652033832157e-09,
+  "min_momentum_ratio_at_full_torque": 0.9440096226348741,
+  "push_duration_range": [
+   0.06,
+   0.32
+  ],
+  "impulse": 18.379993301983273,
+  "squared_effort": 36.73187088249323
+ },
+ "libration_rest": {
+  "start": [
+   0.0,
+   0.0
+  ],
+  "duration": 105.485,
+  "control_period": 0.02,
+  "max_abs_input": 2.0,
+  "replay_end_target_gap": -0.0034616185585882447,
+  "replay_end_V": -0.04963352011332489,
+  "replay_end_energy": 39.19161524286819,
+  "replay_first_target_entry": 105.485,
+  "replay_max_energy": 39.191615242868615,
+  "stored_max_energy": 39.19161523052494,
+  "replay_minus_stored": 1.1460796603375314e-07,
+  "inside_target": true,
+  "inside_operating_region": true,
+  "pushes": 32,
+  "active_time": 9.02,
+  "active_fraction_until_V0": 0.08702378650164379,
+  "time_V_reaches_0": 103.42,
+  "largest_V_increase_per_step": 1.481836875427689e-10,
+  "min_momentum_ratio_at_full_torque": 0.942814967663123,
+  "push_duration_range": [
+   0.1,
+   0.3
+  ],
+  "impulse": 18.006954538237466,
+  "squared_effort": 36.00239768970726
+ },
+ "rest_p1.5": {
+  "start": [
+   1.5,
+   0.0
+  ],
+  "duration": 40.375,
+  "control_period": 0.02,
+  "max_abs_input": 1.9999998406598434,
+  "replay_end_target_gap": -0.00015697133204209401,
+  "replay_end_V": -0.04963380101760606,
+  "replay_end_energy": 39.19161552377247,
+  "replay_first_target_entry": 40.375,
+  "replay_max_energy": 39.19161552377269,
+  "stored_max_energy": 39.19161551885772,
+  "replay_minus_stored": 3.439014421819002e-08,
+  "inside_target": true,
+  "inside_operating_region": true,
+  "pushes": 10,
+  "active_time": 2.88,
+  "active_fraction_until_V0": 0.07451797811360084,
+  "time_V_reaches_0": 38.38,
+  "largest_V_increase_per_step": 1.4093615163801587e-10,
+  "min_momentum_ratio_at_full_torque": 0.9445458194619207,
+  "push_duration_range": [
+   0.22,
+   0.3
+  ],
+  "impulse": 5.726529816763546,
+  "squared_effort": 11.442126095428398
+ },
+ "rest_m1.5": {
+  "start": [
+   -1.5,
+   0.0
+  ],
+  "duration": 40.375,
+  "control_period": 0.02,
+  "max_abs_input": 1.9999998406598434,
+  "replay_end_target_gap": -0.00015697133289378773,
+  "replay_end_V": -0.049633801017442636,
+  "replay_end_energy": 39.191615523772306,
+  "replay_first_target_entry": 40.375,
+  "replay_max_energy": 39.1916155237724,
+  "stored_max_energy": 39.19161551885772,
+  "replay_minus_stored": 3.438883606987592e-08,
+  "inside_target": true,
+  "inside_operating_region": true,
+  "pushes": 10,
+  "active_time": 2.88,
+  "active_fraction_until_V0": 0.07451797811360084,
+  "time_V_reaches_0": 38.38,
+  "largest_V_increase_per_step": 1.4093615163801587e-10,
+  "min_momentum_ratio_at_full_torque": 0.9445458194619207,
+  "push_duration_range": [
+   0.22,
+   0.3
+  ],
+  "impulse": 5.726529816763547,
+  "squared_effort": 11.442126095428401
+ }
+}

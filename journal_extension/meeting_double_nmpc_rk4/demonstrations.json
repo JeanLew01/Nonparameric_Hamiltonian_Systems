@@ -1,0 +1,154 @@
+{
+ "nmpc": {
+  "control_period": 0.025,
+  "horizon_steps": 80,
+  "Q": [
+   10.0,
+   10.0,
+   0.1,
+   0.1
+  ],
+  "Q_terminal": [
+   100.0,
+   100.0,
+   1.0,
+   1.0
+  ],
+  "R": 0.001,
+  "input_bound": 20.0,
+  "energy_cap": 100.0,
+  "cap_penalty": 10000.0,
+  "discretization": "radau collocation, degree 3",
+  "plant": "RK4, step 0.005 s"
+ },
+ "demonstrations": [
+  {
+   "kind": "below",
+   "target": "up",
+   "start": [
+    0.02,
+    0.02,
+    0.0,
+    0.0
+   ],
+   "start_energy": 0.005885803802616632,
+   "duration": 1.2000000000000002,
+   "snippets": 12,
+   "max_abs_input": 20.0,
+   "share_of_inputs_at_bound": 0.34375,
+   "energy_min": 0.005885803802616632,
+   "energy_max": 68.83604460404476,
+   "final_state": [
+    -3.0511928170840976,
+    3.203207482462028,
+    -0.9243488091005522,
+    -0.6081948688957605
+   ],
+   "final_energy": 58.9962360060888,
+   "final_target_residual": -0.06376399391120202,
+   "time_of_first_band_entry": 1.1500000000000001,
+   "chained_endpoint_error": 0.0,
+   "energy_at_snippet_starts": [
+    0.01,
+    9.29,
+    26.95,
+    43.61,
+    45.69,
+    45.78,
+    54.68,
+    64.17,
+    68.71,
+    62.94,
+    59.53,
+    59.14
+   ],
+   "seconds": 14.6
+  },
+  {
+   "kind": "above",
+   "target": "up",
+   "start": [
+    3.141592653589793,
+    3.141592653589793,
+    10.587917642293974,
+    7.058611761529316
+   ],
+   "start_energy": 90.0,
+   "duration": 1.4000000000000001,
+   "snippets": 14,
+   "max_abs_input": 20.0,
+   "share_of_inputs_at_bound": 0.25892857142857145,
+   "energy_min": 58.97091362237638,
+   "energy_max": 100.00000356582099,
+   "final_state": [
+    9.35197557952285,
+    9.421813378471446,
+    0.7780291861720839,
+    0.2801185637596355
+   ],
+   "final_energy": 58.97091362237638,
+   "final_target_residual": -0.08908637762362304,
+   "time_of_first_band_entry": 1.35,
+   "chained_endpoint_error": 0.0,
+   "energy_at_snippet_starts": [
+    90.0,
+    77.76,
+    68.71,
+    61.73,
+    59.56,
+    66.85,
+    78.68,
+    100.0,
+    100.0,
+    100.0,
+    92.28,
+    76.49,
+    63.33,
+    59.15
+   ],
+   "seconds": 16.8
+  },
+  {
+   "kind": "down",
+   "target": "down",
+   "start": [
+    4.090909090909091,
+    4.090909090909091,
+    -12.50459696200003,
+    -8.336397974666687
+   ],
+   "start_energy": 89.99999999999999,
+   "duration": 1.2000000000000002,
+   "snippets": 12,
+   "max_abs_input": 20.0,
+   "share_of_inputs_at_bound": 0.5208333333333334,
+   "energy_min": 0.09508261635645143,
+   "energy_max": 91.23642769939593,
+   "final_state": [
+    -0.057822047069262424,
+    6.243301466827971,
+    0.41111080594695,
+    0.09487618737311306
+   ],
+   "final_energy": 0.09508261635645143,
+   "final_target_residual": -0.14217795293073748,
+   "time_of_first_band_entry": 1.1500000000000001,
+   "chained_endpoint_error": 0.0,
+   "energy_at_snippet_starts": [
+    90.0,
+    81.43,
+    90.84,
+    81.67,
+    73.03,
+    67.55,
+    64.77,
+    45.92,
+    23.6,
+    4.6,
+    2.27,
+    0.8
+   ],
+   "seconds": 9.9
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+# caches and scratch output written when the scripts run
+_cache/
+_audit_cache/
+__pycache__/
+*.nbi
+*.nbc
+*.pending
+*.tmp.npz
+paper_figures_preview/

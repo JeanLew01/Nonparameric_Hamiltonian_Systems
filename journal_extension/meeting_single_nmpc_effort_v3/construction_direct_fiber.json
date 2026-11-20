@@ -1,0 +1,130 @@
+{
+  "variant": "direct_fiber",
+  "original_assignments": 64563,
+  "attempts": 451941,
+  "accepted": 448528,
+  "max_endpoint_error": 1.9235812942497432e-10,
+  "status_counts": {
+    "0": 448528,
+    "1": 7,
+    "2": 0,
+    "3": 0,
+    "4": 3406,
+    "5": 0,
+    "6": 0,
+    "7": 0
+  },
+  "accepted_by_fraction": {
+    "0.125": 64560,
+    "0.25": 63035,
+    "0.375": 64544,
+    "0.5": 64248,
+    "0.625": 64546,
+    "0.75": 63035,
+    "0.875": 64560
+  },
+  "seconds": 217.85539771599997,
+  "source_sha256": "99bf83aa608ec0112996fdb56dfad6b8862b0772566062ac8c45fe975b84b38a",
+  "rows": [
+    {
+      "M": 1,
+      "K": 1,
+      "assignments": 16064
+    },
+    {
+      "M": 1,
+      "K": 2,
+      "assignments": 31971
+    },
+    {
+      "M": 1,
+      "K": 4,
+      "assignments": 64011
+    },
+    {
+      "M": 1,
+      "K": 8,
+      "assignments": 128248
+    },
+    {
+      "M": 2,
+      "K": 1,
+      "assignments": 32128
+    },
+    {
+      "M": 2,
+      "K": 2,
+      "assignments": 63942
+    },
+    {
+      "M": 2,
+      "K": 4,
+      "assignments": 128022
+    },
+    {
+      "M": 2,
+      "K": 8,
+      "assignments": 256496
+    },
+    {
+      "M": 3,
+      "K": 1,
+      "assignments": 54169
+    },
+    {
+      "M": 3,
+      "K": 2,
+      "assignments": 108023
+    },
+    {
+      "M": 3,
+      "K": 4,
+      "assignments": 215029
+    },
+    {
+      "M": 3,
+      "K": 8,
+      "assignments": 431663
+    },
+    {
+      "M": 4,
+      "K": 1,
+      "assignments": 59366
+    },
+    {
+      "M": 4,
+      "K": 2,
+      "assignments": 118417
+    },
+    {
+      "M": 4,
+      "K": 4,
+      "assignments": 234955
+    },
+    {
+      "M": 4,
+      "K": 8,
+      "assignments": 472377
+    },
+    {
+      "M": 5,
+      "K": 1,
+      "assignments": 64563
+    },
+    {
+      "M": 5,
+      "K": 2,
+      "assignments": 128811
+    },
+    {
+      "M": 5,
+      "K": 4,
+      "assignments": 254881
+    },
+    {
+      "M": 5,
+      "K": 8,
+      "assignments": 513091
+    }
+  ]
+}
